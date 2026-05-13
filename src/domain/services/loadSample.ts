@@ -1,7 +1,5 @@
 import { generateSampleData } from './sampleData';
 import { db } from '../../repositories/indexedDb/db';
-import type { Task } from '../models/task';
-import type { DependencyEdge } from '../models/dependency';
 
 export async function loadSampleIntoStores() {
   const { project, tasks, edges } = generateSampleData();
@@ -9,11 +7,11 @@ export async function loadSampleIntoStores() {
   await db.projects.put(project);
 
   for (const task of tasks) {
-    await db.tasks.put(task as Task);
+    await db.tasks.put(task);
   }
 
   for (const edge of edges) {
-    await db.dependencyEdges.put(edge as DependencyEdge);
+    await db.dependencyEdges.put(edge);
   }
 
   return project.id;

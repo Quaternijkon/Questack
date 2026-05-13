@@ -33,7 +33,7 @@ export default function TaskContextMenu({ x, y, taskId, onClose }: TaskContextMe
 
   const handleAddChild = async () => {
     if (!currentProjectId) return;
-    const title = prompt('Subtask title:');
+    const title = prompt('子任务标题：');
     if (title?.trim()) {
       await createTask(currentProjectId, taskId, title.trim());
       }
@@ -42,7 +42,7 @@ export default function TaskContextMenu({ x, y, taskId, onClose }: TaskContextMe
 
   const handleAddSibling = async () => {
     if (!currentProjectId || !task) return;
-    const title = prompt('Sibling task title:');
+    const title = prompt('同级任务标题：');
     if (title?.trim()) {
       await createTask(currentProjectId, task.parentId, title.trim());
     }
@@ -50,7 +50,7 @@ export default function TaskContextMenu({ x, y, taskId, onClose }: TaskContextMe
   };
 
   const handleDelete = async () => {
-    if (confirm('Delete this task and all subtasks? This cannot be undone.')) {
+    if (confirm('确认删除此任务及其所有子任务？此操作不可撤销。')) {
       await deleteTask(taskId);
     }
     onClose();
@@ -75,20 +75,20 @@ export default function TaskContextMenu({ x, y, taskId, onClose }: TaskContextMe
       style={{ left: x, top: y }}
     >
       <button className="m3-menu-item" onClick={handleInspect}>
-        Inspect
+        查看详情
       </button>
       <button className="m3-menu-item" onClick={handleViewDeps}>
-        View Dependencies
+        查看依赖
       </button>
       <button className="m3-menu-item" onClick={handleAddChild}>
-        Add Subtask
+        添加子任务
       </button>
       <button className="m3-menu-item" onClick={handleAddSibling}>
-        Add Sibling
+        添加同级任务
       </button>
       <div className="m3-divider" />
       <button className="m3-menu-item destructive" onClick={handleDelete}>
-        Delete
+        删除
       </button>
     </div>
   );

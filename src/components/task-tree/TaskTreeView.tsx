@@ -19,8 +19,8 @@ export default function TaskTreeView() {
     return (
       <div className="empty-state">
         <span className="empty-state-icon">📁</span>
-        <h3>No project selected</h3>
-        <p>Create or select a project from the sidebar.</p>
+        <h3>未选择项目</h3>
+        <p>请在侧边栏创建或选择一个项目。</p>
       </div>
     );
   }
@@ -30,7 +30,7 @@ export default function TaskTreeView() {
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
   const handleAddRoot = async () => {
-    const title = prompt('Task title:');
+    const title = prompt('任务标题：');
     if (title?.trim()) {
       await createTask(currentProjectId, null, title.trim());
     }
@@ -49,16 +49,16 @@ export default function TaskTreeView() {
   return (
     <div className="task-tree" onClick={() => setContextMenu(null)}>
       <div className="main-toolbar">
-        <h2 className="toolbar-title">Tasks</h2>
+        <h2 className="toolbar-title">任务</h2>
         <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddRoot}>
-          + Add Task
+          + 添加任务
         </button>
       </div>
       {rootTasks.length === 0 ? (
         <div className="empty-state">
           <span className="empty-state-icon">📋</span>
-          <h3>No tasks yet</h3>
-          <p>Click "Add Task" to start breaking down your goal.</p>
+          <h3>暂无任务</h3>
+          <p>点击「添加任务」开始拆解目标。</p>
         </div>
       ) : (
         rootTasks.map((task) => (

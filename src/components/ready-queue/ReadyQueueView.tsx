@@ -14,7 +14,7 @@ export default function ReadyQueueView() {
   if (!currentProjectId) {
     return (
       <div className="empty-state">
-        <h3>No project selected</h3>
+        <h3>未选择项目</h3>
       </div>
     );
   }
@@ -25,7 +25,7 @@ export default function ReadyQueueView() {
     const parts: string[] = [];
     let current: typeof task | undefined = task;
     while (current) {
-      parts.unshift(current.title || '(untitled)');
+      parts.unshift(current.title || '（未命名）');
       current = tasks.find((t) => t.id === current!.parentId);
     }
     return parts.join(' > ');
@@ -49,8 +49,8 @@ export default function ReadyQueueView() {
       <div className="ready-queue">
         <div className="queue-empty">
           <span className="queue-empty-icon">check_circle</span>
-          <h3>Nothing ready to do</h3>
-          <p>All tasks are either blocked, in progress, or completed. Check the Roadmap or Graph view.</p>
+          <h3>暂时没有可执行的任务</h3>
+          <p>所有任务均被阻塞、进行中或已完成。可查看路线图或依赖图了解详情。</p>
         </div>
       </div>
     );
@@ -59,7 +59,7 @@ export default function ReadyQueueView() {
   return (
     <div className="ready-queue">
       <div className="queue-header">
-        <span className="toolbar-title">Ready Queue ({readyTasks.length})</span>
+        <span className="toolbar-title">待办队列 ({readyTasks.length})</span>
       </div>
       {readyTasks.map((task) => (
         <div
@@ -71,10 +71,10 @@ export default function ReadyQueueView() {
           <span className={`priority-indicator priority-${task.priority}`} />
           <div className="queue-card-main">
             <div className="queue-card-path">{getTaskPath(task.id)}</div>
-            <div className="queue-card-title">{task.title || '(untitled)'}</div>
+            <div className="queue-card-title">{task.title || '（未命名）'}</div>
             {task.estimateMinutes && (
               <div className="queue-card-meta">
-                ~{task.estimateMinutes} min
+                ~{task.estimateMinutes} 分钟
               </div>
             )}
           </div>
@@ -86,7 +86,7 @@ export default function ReadyQueueView() {
                 handleStart(task.id);
               }}
             >
-              Start
+              开始
             </button>
             <button
               className="m3-btn-outlined m3-btn-sm"
@@ -95,7 +95,7 @@ export default function ReadyQueueView() {
                 handleComplete(task.id);
               }}
             >
-              Done
+              完成
             </button>
           </div>
         </div>

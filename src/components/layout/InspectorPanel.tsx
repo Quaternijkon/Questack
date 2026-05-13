@@ -15,7 +15,7 @@ export default function InspectorPanel() {
   return (
     <aside className="inspector-panel">
       <div className="inspector-header">
-        <span className="inspector-header-title">Task Inspector</span>
+        <span className="inspector-header-title">任务详情</span>
         <button className="m3-icon-btn" onClick={closeInspector}>x</button>
       </div>
 
@@ -24,13 +24,13 @@ export default function InspectorPanel() {
           className={`inspector-tab ${inspectorTab === 'details' ? 'active' : ''}`}
           onClick={() => setInspectorTab('details')}
         >
-          Details
+          详情
         </button>
         <button
           className={`inspector-tab ${inspectorTab === 'dependencies' ? 'active' : ''}`}
           onClick={() => setInspectorTab('dependencies')}
         >
-          Dependencies
+          依赖关系
         </button>
       </div>
 

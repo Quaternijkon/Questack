@@ -16,7 +16,7 @@ export default function DependencyEditor() {
   const [error, setError] = useState('');
 
   if (!task) {
-    return <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Select a task to edit dependencies.</div>;
+    return <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>选择一个任务以编辑依赖。</div>;
   }
 
   const incoming = edges.filter((e) => e.toTaskId === task.id);
@@ -30,7 +30,7 @@ export default function DependencyEditor() {
     if (!addTarget || !currentProjectId) return;
     const result = await addDependency(addTarget, task.id, currentProjectId);
     if (!result.success) {
-      setError(result.message ?? 'Failed to add dependency');
+      setError(result.message ?? '添加依赖失败');
     } else {
       setAddTarget('');
       setError('');
@@ -41,7 +41,7 @@ export default function DependencyEditor() {
     if (!addTarget || !currentProjectId) return;
     const result = await addDependency(task.id, addTarget, currentProjectId);
     if (!result.success) {
-      setError(result.message ?? 'Failed to add dependency');
+      setError(result.message ?? '添加依赖失败');
     } else {
       setAddTarget('');
       setError('');
@@ -51,7 +51,7 @@ export default function DependencyEditor() {
   return (
     <div>
       <div className="m3-form-field">
-        <label className="m3-form-label">Prerequisites (blocks this task)</label>
+        <label className="m3-form-label">前置任务（阻塞此任务）</label>
         <ul className="dep-list">
           {incoming.map((e) => {
             const from = tasks.find((t) => t.id === e.fromTaskId);
@@ -59,13 +59,13 @@ export default function DependencyEditor() {
               <li className="dep-list-item" key={e.id}>
                 <span>{from?.title || e.fromTaskId}</span>
                 <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)}>
-                  Remove
+                  移除
                 </button>
               </li>
             );
           })}
           {incoming.length === 0 && (
-            <li className="dep-list-empty">No prerequisites</li>
+              <li className="dep-list-empty">无前置任务</li>
           )}
         </ul>
         <div className="dep-add-row">
@@ -74,19 +74,19 @@ export default function DependencyEditor() {
             onChange={(e) => setAddTarget(e.target.value)}
             style={{ flex: 1 }}
           >
-            <option value="">Select task that must complete first...</option>
+            <option value="">选择必须首先完成的任务...</option>
             {otherTasks.map((t) => (
-              <option key={t.id} value={t.id}>{t.title || '(untitled)'}</option>
+              <option key={t.id} value={t.id}>{t.title || '（未命名）'}</option>
             ))}
           </select>
           <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddIncoming}>
-            Add
+            添加
           </button>
         </div>
       </div>
 
       <div className="m3-form-field">
-        <label className="m3-form-label">Blocks (depends on this task)</label>
+        <label className="m3-form-label">阻塞的任务（依赖于此任务）</label>
         <ul className="dep-list">
           {outgoing.map((e) => {
             const to = tasks.find((t) => t.id === e.toTaskId);
@@ -94,13 +94,13 @@ export default function DependencyEditor() {
               <li className="dep-list-item" key={e.id}>
                 <span>{to?.title || e.toTaskId}</span>
                 <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)}>
-                  Remove
+                  移除
                 </button>
               </li>
             );
           })}
           {outgoing.length === 0 && (
-            <li className="dep-list-empty">Doesn't block anything</li>
+              <li className="dep-list-empty">不阻塞任何任务</li>
           )}
         </ul>
         <div className="dep-add-row">
@@ -109,13 +109,13 @@ export default function DependencyEditor() {
             onChange={(e) => setAddTarget(e.target.value)}
             style={{ flex: 1 }}
           >
-            <option value="">Select task that depends on this...</option>
+            <option value="">选择依赖于此任务的任务...</option>
             {otherTasks.map((t) => (
-              <option key={t.id} value={t.id}>{t.title || '(untitled)'}</option>
+              <option key={t.id} value={t.id}>{t.title || '（未命名）'}</option>
             ))}
           </select>
           <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddOutgoing}>
-            Add
+            添加
           </button>
         </div>
       </div>

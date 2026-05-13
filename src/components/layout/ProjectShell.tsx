@@ -27,7 +27,7 @@ function EmptyStart() {
   const createProject = useProjectStore((s) => s.createProject);
 
   const handleCreate = async () => {
-    const name = prompt('Enter project name:');
+    const name = prompt('输入项目名称：');
     if (name?.trim()) {
       await createProject(name.trim());
     }
@@ -36,10 +36,10 @@ function EmptyStart() {
   return (
     <div className="empty-state">
       <div className="empty-state-icon">Q</div>
-      <h3>Welcome to Questack</h3>
-      <p>Break complex goals into task trees with dependency DAGs. Create your first project to get started.</p>
+      <h3>欢迎使用 Questack</h3>
+      <p>将复杂目标拆解为带依赖关系图的任务树。创建您的第一个项目以开始使用。</p>
       <button className="m3-btn m3-btn-filled" onClick={handleCreate}>
-        Create Project
+        创建项目
       </button>
     </div>
   );

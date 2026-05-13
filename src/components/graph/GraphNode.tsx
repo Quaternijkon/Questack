@@ -13,18 +13,18 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
 
   return (
     <div className={`task-node status-${status}`}>
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Left} />
       <div className="node-header">
         <span className={`priority-indicator priority-${task.priority}`} />
-        <span className="node-title">{task.title || '(untitled)'}</span>
+        <span className="node-title">{task.title || '（未命名）'}</span>
         <span className={`status-badge status-${status}`}>{status}</span>
       </div>
       <div className="node-body">
         {task.estimateMinutes != null && (
-          <span className="node-estimate">{task.estimateMinutes} min</span>
+          <span className="node-estimate">{task.estimateMinutes} 分钟</span>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Right} />
     </div>
   );
 });

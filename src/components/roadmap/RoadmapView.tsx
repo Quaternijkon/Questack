@@ -23,7 +23,7 @@ export default function RoadmapView() {
   if (!currentProjectId) {
     return (
       <div className="empty-state">
-        <h3>No project selected</h3>
+        <h3>未选择项目</h3>
       </div>
     );
   }
@@ -32,8 +32,8 @@ export default function RoadmapView() {
     return (
       <div className="roadmap-view">
         <div className="empty-state">
-          <h3>No tasks to show</h3>
-          <p>Add tasks in the Tree view first.</p>
+          <h3>暂无任务</h3>
+          <p>请先在任务树中添加任务。</p>
         </div>
       </div>
     );
@@ -45,7 +45,7 @@ export default function RoadmapView() {
     const parts: string[] = [];
     let current: typeof task | undefined = task;
     while (current) {
-      parts.unshift(current.title || '(untitled)');
+      parts.unshift(current.title || '（未命名）');
       current = tasks.find((t) => t.id === current!.parentId);
     }
     return parts.join(' > ');
@@ -65,7 +65,7 @@ export default function RoadmapView() {
   return (
     <div className="roadmap-view">
       <div className="roadmap-header">
-        <span className="toolbar-title">Roadmap ({orderedTasks.length} tasks)</span>
+        <span className="toolbar-title">路线图（{orderedTasks.length} 个任务）</span>
       </div>
       {orderedTasks.map((task) => {
         const derived = derivedStates.get(task.id);
@@ -82,10 +82,10 @@ export default function RoadmapView() {
             <span className={`priority-indicator priority-${task.priority}`} />
             <div className="roadmap-item-main">
               <div className="roadmap-item-path">{getPath(task.id)}</div>
-              <div className="roadmap-item-title">{task.title || '(untitled)'}</div>
+              <div className="roadmap-item-title">{task.title || '（未命名）'}</div>
               {reason && (
                 <div className="roadmap-item-blocked-by">
-                  Blocked by: {reason.unmetPrerequisites.map((p) => p.title || p.id).join(', ')}
+                  被阻塞：{reason.unmetPrerequisites.map((p) => p.title || p.id).join(', ')}
                 </div>
               )}
             </div>
@@ -99,7 +99,7 @@ export default function RoadmapView() {
                     handleComplete(task.id);
                   }}
                 >
-                  Done
+                  完成
                 </button>
               )}
             </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -23,6 +23,15 @@ import type { DependencyEdge } from '../../domain/models/dependency';
 
 const nodeTypes = { taskNode: TaskGraphNode };
 
+const RANK_COLORS = [
+  'rgba(122,211,211,0.06)',
+  'rgba(208,188,255,0.06)',
+  'rgba(204,194,220,0.06)',
+  'rgba(255,183,77,0.06)',
+  'rgba(122,211,211,0.06)',
+  'rgba(208,188,255,0.06)',
+];
+
 export default function GraphView() {
   const currentProjectId = useProjectStore((s) => s.currentProjectId);
   const tasks = useTaskStore((s) => s.tasks);
@@ -34,6 +43,8 @@ export default function GraphView() {
   const openInspector = useUIStore((s) => s.openInspector);
   const graphFilter = useUIStore((s) => s.graphFilter);
   const setGraphFilter = useUIStore((s) => s.setGraphFilter);
+
+  const [rankBands, setRankBands] = useState<{ x: number; y: number; width: number; height: number; label: string }[]>([]);
 
   const activeTasks = useMemo(
     () => tasks.filter((t) => t.archivedAt == null),
@@ -67,17 +78,54 @@ export default function GraphView() {
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
   const [rfEdges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
 
+  const applyLayout = useCallback((direction: 'LR' | 'TB' = 'LR') => {
+    if (filteredTasks.length === 0) return;
+    const layouted = layoutGraph(filteredTasks, filteredEdges, direction);
+    setNodes((nds) => {
+      const next = nds.map((n) => {
+        const pos = layouted.get(n.id);
+        return pos ? { ...n, position: pos } : n;
+      });
+      computeRankBands(layouted, next);
+      return next;
+    });
+  }, [filteredTasks, filteredEdges, setNodes]);
+
+  const computeRankBands = (
+    _layout: Map<string, { x: number; y: number }>,
+    nds: Node[]
+  ) => {
+    const byX = new Map<number, { minY: number; maxY: number; count: number }>();
+    for (const n of nds) {
+      const rx = Math.round(n.position.x / 240) * 240;
+      const existing = byX.get(rx);
+      if (existing) {
+        existing.minY = Math.min(existing.minY, n.position.y);
+        existing.maxY = Math.max(existing.maxY, n.position.y + 80);
+        existing.count++;
+      } else {
+        byX.set(rx, { minY: n.position.y, maxY: n.position.y + 80, count: 1 });
+      }
+    }
+    const sortedX = [...byX.keys()].sort((a, b) => a - b);
+    const bands = sortedX.map((x, i) => {
+      const info = byX.get(x)!;
+      return {
+        x: x - 20,
+        y: info.minY - 40,
+        width: 280,
+        height: info.maxY - info.minY + 80,
+        label: `第 ${i + 1} 层 — ${info.count} 个任务`,
+      };
+    });
+    setRankBands(bands);
+  };
+
   const hasLaidOut = useRef(false);
   useEffect(() => {
     if (filteredTasks.length > 0 && !hasLaidOut.current) {
       const timer = setTimeout(() => {
-        const layouted = layoutGraph(filteredTasks, filteredEdges, 'TB');
-        setNodes((nds) =>
-          nds.map((n) => {
-            const pos = layouted.get(n.id);
-            return pos ? { ...n, position: pos } : n;
-          })
-        );
+        applyLayout('LR');
         hasLaidOut.current = true;
       }, 200);
       return () => clearTimeout(timer);
@@ -105,31 +153,24 @@ export default function GraphView() {
     [selectTask, openInspector]
   );
 
-  const handleLayout = useCallback(() => {
-    const layouted = layoutGraph(filteredTasks, filteredEdges, 'TB');
-    setNodes((nds) =>
-      nds.map((n) => {
-        const pos = layouted.get(n.id);
-        if (pos) {
-          return { ...n, position: { x: pos.x, y: pos.y } };
-        }
-        return n;
-      })
-    );
-  }, [filteredTasks, filteredEdges, setNodes]);
+  const handleRelayout = useCallback(() => {
+    hasLaidOut.current = false;
+    applyLayout('LR');
+    hasLaidOut.current = true;
+  }, [applyLayout]);
 
   const filters: { key: UIStoreState['graphFilter']; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'ready', label: 'Ready' },
-    { key: 'blocked', label: 'Blocked' },
-    { key: 'in_progress', label: 'Active' },
-    { key: 'done', label: 'Done' },
+    { key: 'all', label: '全部' },
+    { key: 'ready', label: '可执行' },
+    { key: 'blocked', label: '已阻塞' },
+    { key: 'in_progress', label: '进行中' },
+    { key: 'done', label: '已完成' },
   ];
 
   if (!currentProjectId) {
     return (
       <div className="empty-state">
-        <h3>No project selected</h3>
+        <h3>未选择项目</h3>
       </div>
     );
   }
@@ -137,8 +178,12 @@ export default function GraphView() {
   return (
     <div className="graph-container" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="main-toolbar">
-        <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={handleLayout}>
-          Auto Layout
+        <span className="toolbar-title" style={{ fontSize: 12, color: 'var(--md-on-surface-variant)' }}>
+          左→右：先后顺序 &nbsp;|&nbsp; 同层：可并行
+        </span>
+        <div style={{ flex: 1 }} />
+        <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={handleRelayout}>
+          自动布局
         </button>
         {filters.map((f) => (
           <button
@@ -150,7 +195,38 @@ export default function GraphView() {
           </button>
         ))}
       </div>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, position: 'relative' }}>
+        {rankBands.length > 0 && (
+          <div className="rank-band-layer" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+            {rankBands.map((band, i) => (
+              <div key={i} style={{ position: 'absolute', left: band.x, top: band.y, width: band.width, height: band.height }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: RANK_COLORS[i % RANK_COLORS.length],
+                    borderLeft: '1px solid var(--md-outline-variant)',
+                    borderRight: '1px solid var(--md-outline-variant)',
+                    borderRadius: 'var(--shape-corner-md)',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -20,
+                    left: 8,
+                    fontSize: 11,
+                    color: 'var(--md-on-surface-variant)',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {band.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <ReactFlow
           nodes={nodes}
           edges={rfEdges}
@@ -165,19 +241,22 @@ export default function GraphView() {
           }}
           nodeTypes={nodeTypes}
           fitView
+          fitViewOptions={{ padding: 0.2 }}
           deleteKeyCode={['Backspace', 'Delete']}
           multiSelectionKeyCode="Shift"
           defaultEdgeOptions={{ type: 'smoothstep', animated: false }}
+          minZoom={0.1}
+          maxZoom={2}
         >
           <Background />
           <Controls />
           <MiniMap
             nodeColor={(n) => {
               const derived = derivedStates.get(n.id);
-              if (derived?.computedStatus === 'ready') return '#00cec9';
-              if (derived?.computedStatus === 'blocked') return '#ff6b6b';
-              if (derived?.computedStatus === 'done') return '#6c5ce7';
-              return '#2a2a3a';
+              if (derived?.computedStatus === 'ready') return 'var(--md-tertiary)';
+              if (derived?.computedStatus === 'blocked') return 'var(--md-error)';
+              if (derived?.computedStatus === 'done') return 'var(--md-primary)';
+              return 'var(--md-outline-variant)';
             }}
             maskColor="rgba(0,0,0,0.5)"
           />

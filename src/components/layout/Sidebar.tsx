@@ -21,14 +21,14 @@ export default function Sidebar() {
   const [importErrors, setImportErrors] = useState<string[]>([]);
 
   const handleCreate = async () => {
-    const name = prompt('Enter project name:');
+    const name = prompt('输入项目名称：');
     if (name?.trim()) {
       await createProject(name.trim());
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Delete project "${name}"? This cannot be undone.`)) {
+    if (confirm(`确认删除项目 "${name}"？此操作不可撤销。`)) {
       await deleteProject(id);
     }
   };
@@ -36,7 +36,7 @@ export default function Sidebar() {
   const handleExport = () => {
     const currentProject = projects.find((p) => p.id === currentProjectId);
     if (!currentProject) {
-      alert('Select a project first.');
+      alert('请先选择一个项目。');
       return;
     }
     const projectTasks = tasks.filter((t) => t.projectId === currentProjectId);
@@ -87,10 +87,10 @@ export default function Sidebar() {
   };
 
   const views: { mode: ViewMode; label: string }[] = [
-    { mode: 'tree', label: 'Tree' },
-    { mode: 'graph', label: 'Graph' },
-    { mode: 'ready-queue', label: 'Ready' },
-    { mode: 'roadmap', label: 'Roadmap' },
+    { mode: 'tree', label: '任务树' },
+    { mode: 'graph', label: '依赖图' },
+    { mode: 'ready-queue', label: '待办队列' },
+    { mode: 'roadmap', label: '路线图' },
   ];
 
   return (
@@ -101,7 +101,7 @@ export default function Sidebar() {
             <div className="sidebar-logo">Q</div>
             <span className="sidebar-headline">Questack</span>
           </div>
-          <button className="m3-icon-btn" onClick={handleCreate} title="New Project">
+          <button className="m3-icon-btn" onClick={handleCreate} title="新建项目">
             +
           </button>
         </div>
@@ -109,7 +109,7 @@ export default function Sidebar() {
         <div className="sidebar-nav">
           {currentProjectId && (
             <>
-              <div className="nav-section-label">Views</div>
+              <div className="nav-section-label">视图切换</div>
               {views.map((v) => (
                 <div
                   key={v.mode}
@@ -122,7 +122,7 @@ export default function Sidebar() {
             </>
           )}
 
-          <div className="nav-section-label">Projects</div>
+          <div className="nav-section-label">项目列表</div>
           {projects.map((p) => (
             <div
               key={p.id}
@@ -137,7 +137,7 @@ export default function Sidebar() {
                   e.stopPropagation();
                   handleDelete(p.id, p.name);
                 }}
-                title="Delete project"
+                title="删除项目"
               >
                 x
               </button>
@@ -150,10 +150,10 @@ export default function Sidebar() {
         <div className="sidebar-footer">
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="m3-btn m3-btn-outlined m3-btn-sm" onClick={handleExport} disabled={!currentProjectId}>
-              Export
+              导出
             </button>
             <button className="m3-btn m3-btn-outlined m3-btn-sm" onClick={handleImportClick}>
-              Import
+              导入
             </button>
           </div>
         </div>
@@ -162,9 +162,9 @@ export default function Sidebar() {
       {importModal && (
         <div className="m3-dialog-overlay" onClick={() => setImportModal(false)}>
           <div className="m3-dialog" onClick={(e) => e.stopPropagation()}>
-            <h2>Import Project</h2>
+            <h2>导入项目</h2>
             <p style={{ fontSize: 13, color: 'var(--md-on-surface-variant)', marginBottom: 16 }}>
-              Select a Questack JSON export file to import.
+              选择一个 Questack JSON 导出文件以导入。
             </p>
             <input
               type="file"
@@ -174,7 +174,7 @@ export default function Sidebar() {
             {importErrors.length > 0 && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--md-error)', marginBottom: 4 }}>
-                  Import Errors:
+                  导入错误：
                 </div>
                 <ul className="import-error-list">
                   {importErrors.map((err, i) => (
@@ -185,7 +185,7 @@ export default function Sidebar() {
             )}
             <div className="m3-dialog-actions">
               <button className="m3-btn m3-btn-outlined" onClick={() => setImportModal(false)}>
-                Cancel
+                取消
               </button>
             </div>
           </div>

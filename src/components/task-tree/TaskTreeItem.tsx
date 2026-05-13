@@ -109,7 +109,7 @@ export default function TaskTreeItem({
             className="tree-title"
             onDoubleClick={handleDoubleClick}
           >
-            {task.title || '(untitled)'}
+            {task.title || '（未命名）'}
           </span>
         )}
         {!isLeaf && derived && derived.descendantCount > 0 && (

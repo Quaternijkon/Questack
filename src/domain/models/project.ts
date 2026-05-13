@@ -18,7 +18,7 @@ export interface ProjectSettings {
 export function createDefaultProjectSettings(): ProjectSettings {
   return {
     readyQueueSort: 'topological',
-    graphDirection: 'TB',
+    graphDirection: 'LR',
     allowParentDependency: false,
     allowAncestorDependency: false,
   };

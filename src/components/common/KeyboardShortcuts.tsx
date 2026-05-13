@@ -23,7 +23,7 @@ export default function KeyboardShortcuts() {
           case 'n':
             e.preventDefault();
             if (currentProjectId) {
-              const title = prompt('Task title:');
+              const title = prompt('任务标题：');
               if (title?.trim()) createTask(currentProjectId, null, title.trim());
             }
             break;
@@ -41,7 +41,7 @@ export default function KeyboardShortcuts() {
 
       if (e.key === 'Delete' && selectedTaskId && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
         e.preventDefault();
-        if (confirm('Delete selected task and all subtasks?')) {
+        if (confirm('确认删除选中的任务及其所有子任务？')) {
           deleteTask(selectedTaskId);
         }
       }

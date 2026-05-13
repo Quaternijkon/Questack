@@ -662,6 +662,44 @@ select {
   background: var(--md-surface);
 }
 
+.graph-container .react-flow {
+  position: relative;
+  z-index: 1;
+}
+
+.task-layer-band-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+
+.task-layer-band {
+  position: absolute;
+}
+
+.task-layer-band-surface {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--shape-corner-md);
+  box-shadow: inset 0 0 0 1px rgba(230,224,233,0.02);
+}
+
+.task-layer-band-label {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font: var(--typescale-label-small);
+  color: var(--md-on-surface-variant);
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--shape-corner-full);
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
 .react-flow__node { font: var(--typescale-body-small); }
 
 .task-node {
@@ -679,6 +717,11 @@ select {
   box-shadow: var(--elevation-2);
 }
 .task-node.selected { border-color: var(--md-primary); }
+
+.task-node.task-node-container {
+  border-style: dashed;
+  background: linear-gradient(180deg, var(--md-surface-container-high), var(--md-surface-container));
+}
 
 .task-node.status-ready { border-color: var(--md-tertiary); }
 .task-node.status-blocked { border-color: var(--md-error); }
@@ -711,9 +754,27 @@ select {
   color: var(--md-on-surface-variant);
 }
 
-.react-flow__edge-path {
+.task-node .node-layout-source {
+  font: var(--typescale-label-small);
+  color: var(--md-primary);
+  border: 1px solid rgba(208,188,255,0.35);
+  border-radius: var(--shape-corner-full);
+  padding: 0 6px;
+}
+
+.react-flow__edge.dependency-edge .react-flow__edge-path {
   stroke: var(--md-outline);
   stroke-width: 2.5;
+}
+.react-flow__edge.decomposition-edge .react-flow__edge-path {
+  stroke: var(--md-outline-variant);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 6;
+  opacity: 0.65;
+}
+.react-flow__edge.blocking-edge .react-flow__edge-path {
+  stroke: var(--md-error);
+  stroke-width: 3.5;
 }
 .react-flow__edge.selected .react-flow__edge-path {
   stroke: var(--md-primary);

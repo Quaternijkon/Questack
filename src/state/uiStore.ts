@@ -2,6 +2,10 @@ import { create } from 'zustand';
 
 export type ViewMode = 'tree' | 'graph' | 'ready-queue' | 'roadmap';
 export type InspectorTab = 'details' | 'dependencies' | 'activity';
+export type GraphLayoutMode = 'auto' | 'edit';
+export type GraphManualPositions = Record<string, Record<string, { x: number; y: number }>>;
+
+const GRAPH_MANUAL_POSITIONS_KEY = 'questack:graphManualPositions';
 
 export interface UIStoreState {
   viewMode: ViewMode;
@@ -12,6 +16,8 @@ export interface UIStoreState {
   graphFilter: 'all' | 'ready' | 'blocked' | 'done' | 'in_progress';
   showGraphFilter: boolean;
   selectedProjectId: string | null;
+  graphLayoutMode: GraphLayoutMode;
+  graphManualPositions: GraphManualPositions;
 
   setViewMode: (mode: ViewMode) => void;
   toggleInspector: () => void;
@@ -25,6 +31,10 @@ export interface UIStoreState {
   setAllCollapsed: () => void;
   isTaskExpanded: (taskId: string) => boolean;
   setGraphFilter: (filter: UIStoreState['graphFilter']) => void;
+  setGraphLayoutMode: (mode: GraphLayoutMode) => void;
+  saveGraphNodePosition: (projectId: string, taskId: string, position: { x: number; y: number }) => void;
+  clearGraphManualPositions: (projectId: string) => void;
+  getGraphManualPositions: (projectId: string) => Record<string, { x: number; y: number }>;
 }
 
 export const useUIStore = create<UIStoreState>((set, get) => ({
@@ -36,6 +46,8 @@ export const useUIStore = create<UIStoreState>((set, get) => ({
   graphFilter: 'all',
   showGraphFilter: true,
   selectedProjectId: null,
+  graphLayoutMode: 'auto',
+  graphManualPositions: loadGraphManualPositions(),
 
   setViewMode: (mode) => set({ viewMode: mode }),
 
@@ -74,4 +86,45 @@ export const useUIStore = create<UIStoreState>((set, get) => ({
   isTaskExpanded: (taskId) => get().expandedTaskIds.has(taskId),
 
   setGraphFilter: (filter) => set({ graphFilter: filter }),
+
+  setGraphLayoutMode: (mode) => set({ graphLayoutMode: mode }),
+
+  saveGraphNodePosition: (projectId, taskId, position) =>
+    set((state) => {
+      const next: GraphManualPositions = {
+        ...state.graphManualPositions,
+        [projectId]: {
+          ...(state.graphManualPositions[projectId] ?? {}),
+          [taskId]: position,
+        },
+      };
+      persistGraphManualPositions(next);
+      return { graphManualPositions: next };
+    }),
+
+  clearGraphManualPositions: (projectId) =>
+    set((state) => {
+      const next: GraphManualPositions = { ...state.graphManualPositions };
+      delete next[projectId];
+      persistGraphManualPositions(next);
+      return { graphManualPositions: next };
+    }),
+
+  getGraphManualPositions: (projectId) => get().graphManualPositions[projectId] ?? {},
 }));
+
+function loadGraphManualPositions(): GraphManualPositions {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(GRAPH_MANUAL_POSITIONS_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as GraphManualPositions;
+  } catch {
+    return {};
+  }
+}
+
+function persistGraphManualPositions(positions: GraphManualPositions) {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(GRAPH_MANUAL_POSITIONS_KEY, JSON.stringify(positions));
+}

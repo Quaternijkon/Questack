@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -6,7 +6,7 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
-  addEdge,
+  MarkerType,
   type Connection,
   type Node,
   type Edge,
@@ -17,7 +17,7 @@ import { useTaskStore } from '../../state/taskStore';
 import { useGraphStore } from '../../state/graphStore';
 import { useUIStore, type UIStoreState } from '../../state/uiStore';
 import TaskGraphNode from './GraphNode';
-import { layoutGraph } from './layoutGraph';
+import { layoutTaskGraph, type GraphLayerBand } from './layoutGraph';
 import type { Task } from '../../domain/models/task';
 import type { DependencyEdge } from '../../domain/models/dependency';
 
@@ -43,8 +43,11 @@ export default function GraphView() {
   const openInspector = useUIStore((s) => s.openInspector);
   const graphFilter = useUIStore((s) => s.graphFilter);
   const setGraphFilter = useUIStore((s) => s.setGraphFilter);
-
-  const [rankBands, setRankBands] = useState<{ x: number; y: number; width: number; height: number; label: string }[]>([]);
+  const graphLayoutMode = useUIStore((s) => s.graphLayoutMode);
+  const setGraphLayoutMode = useUIStore((s) => s.setGraphLayoutMode);
+  const graphManualPositions = useUIStore((s) => s.graphManualPositions);
+  const saveGraphNodePosition = useUIStore((s) => s.saveGraphNodePosition);
+  const clearGraphManualPositions = useUIStore((s) => s.clearGraphManualPositions);
 
   const activeTasks = useMemo(
     () => tasks.filter((t) => t.archivedAt == null),
@@ -67,82 +70,44 @@ export default function GraphView() {
     [edges, filteredTaskIds]
   );
 
+  const graphLayout = useMemo(() => {
+    const manualPositions = currentProjectId
+      ? graphManualPositions[currentProjectId] ?? {}
+      : {};
+    return layoutTaskGraph(filteredTasks, filteredEdges, { manualPositions });
+  }, [filteredTasks, filteredEdges, currentProjectId, graphManualPositions]);
+
   const layoutedNodes = useMemo(() => {
-    return toReactFlowNodes(filteredTasks, derivedStates);
-  }, [filteredTasks, derivedStates]);
+    return toReactFlowNodes(filteredTasks, derivedStates, graphLayout.positions);
+  }, [filteredTasks, derivedStates, graphLayout.positions]);
 
   const layoutedEdges = useMemo(() => {
-    return toReactFlowEdges(filteredEdges);
-  }, [filteredEdges]);
+    return [
+      ...toDecompositionEdges(filteredTasks, filteredTaskIds),
+      ...toReactFlowEdges(filteredEdges, derivedStates),
+    ];
+  }, [filteredTasks, filteredTaskIds, filteredEdges, derivedStates]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
   const [rfEdges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
 
-  const applyLayout = useCallback((direction: 'LR' | 'TB' = 'LR') => {
-    if (filteredTasks.length === 0) return;
-    const layouted = layoutGraph(filteredTasks, filteredEdges, direction);
-    setNodes((nds) => {
-      const next = nds.map((n) => {
-        const pos = layouted.get(n.id);
-        return pos ? { ...n, position: pos } : n;
-      });
-      computeRankBands(layouted, next);
-      return next;
-    });
-  }, [filteredTasks, filteredEdges, setNodes]);
-
-  const computeRankBands = (
-    _layout: Map<string, { x: number; y: number }>,
-    nds: Node[]
-  ) => {
-    const byX = new Map<number, { minY: number; maxY: number; count: number }>();
-    for (const n of nds) {
-      const rx = Math.round(n.position.x / 240) * 240;
-      const existing = byX.get(rx);
-      if (existing) {
-        existing.minY = Math.min(existing.minY, n.position.y);
-        existing.maxY = Math.max(existing.maxY, n.position.y + 80);
-        existing.count++;
-      } else {
-        byX.set(rx, { minY: n.position.y, maxY: n.position.y + 80, count: 1 });
-      }
-    }
-    const sortedX = [...byX.keys()].sort((a, b) => a - b);
-    const bands = sortedX.map((x, i) => {
-      const info = byX.get(x)!;
-      return {
-        x: x - 20,
-        y: info.minY - 40,
-        width: 280,
-        height: info.maxY - info.minY + 80,
-        label: `第 ${i + 1} 层 — ${info.count} 个任务`,
-      };
-    });
-    setRankBands(bands);
-  };
-
-  const hasLaidOut = useRef(false);
   useEffect(() => {
-    if (filteredTasks.length > 0 && !hasLaidOut.current) {
-      const timer = setTimeout(() => {
-        applyLayout('LR');
-        hasLaidOut.current = true;
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [filteredTasks.length]);
+    setNodes(layoutedNodes);
+  }, [layoutedNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(layoutedEdges);
+  }, [layoutedEdges, setEdges]);
 
   const onConnect = useCallback(
     async (connection: Connection) => {
       if (!connection.source || !connection.target || !currentProjectId) return;
       const result = await addDependency(connection.source, connection.target, currentProjectId);
-      if (result.success) {
-        setEdges((eds) => addEdge({ ...connection, type: 'smoothstep' }, eds));
-      } else {
+      if (!result.success) {
         alert(result.message);
       }
     },
-    [addDependency, currentProjectId, setEdges]
+    [addDependency, currentProjectId]
   );
 
   const onNodeClick = useCallback(
@@ -153,11 +118,19 @@ export default function GraphView() {
     [selectTask, openInspector]
   );
 
-  const handleRelayout = useCallback(() => {
-    hasLaidOut.current = false;
-    applyLayout('LR');
-    hasLaidOut.current = true;
-  }, [applyLayout]);
+  const handleRestoreAutoLayout = useCallback(() => {
+    if (!currentProjectId) return;
+    clearGraphManualPositions(currentProjectId);
+    setGraphLayoutMode('auto');
+  }, [clearGraphManualPositions, currentProjectId, setGraphLayoutMode]);
+
+  const handleNodeDragStop = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      if (!currentProjectId || graphLayoutMode !== 'edit') return;
+      saveGraphNodePosition(currentProjectId, node.id, node.position);
+    },
+    [currentProjectId, graphLayoutMode, saveGraphNodePosition]
+  );
 
   const filters: { key: UIStoreState['graphFilter']; label: string }[] = [
     { key: 'all', label: '全部' },
@@ -179,11 +152,17 @@ export default function GraphView() {
     <div className="graph-container" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="main-toolbar">
         <span className="toolbar-title" style={{ fontSize: 12, color: 'var(--md-on-surface-variant)' }}>
-          左→右：先后顺序 &nbsp;|&nbsp; 同层：可并行
+          上→下：任务拆解 &nbsp;|&nbsp; 左→右：前后顺序 &nbsp;|&nbsp; 背景层：独立任务团
         </span>
         <div style={{ flex: 1 }} />
-        <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={handleRelayout}>
-          自动布局
+        <button
+          className={`m3-chip${graphLayoutMode === 'edit' ? ' selected' : ''}`}
+          onClick={() => setGraphLayoutMode(graphLayoutMode === 'edit' ? 'auto' : 'edit')}
+        >
+          编辑位置
+        </button>
+        <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={handleRestoreAutoLayout}>
+          恢复自动布局
         </button>
         {filters.map((f) => (
           <button
@@ -196,37 +175,7 @@ export default function GraphView() {
         ))}
       </div>
       <div style={{ flex: 1, position: 'relative' }}>
-        {rankBands.length > 0 && (
-          <div className="rank-band-layer" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-            {rankBands.map((band, i) => (
-              <div key={i} style={{ position: 'absolute', left: band.x, top: band.y, width: band.width, height: band.height }}>
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: RANK_COLORS[i % RANK_COLORS.length],
-                    borderLeft: '1px solid var(--md-outline-variant)',
-                    borderRight: '1px solid var(--md-outline-variant)',
-                    borderRadius: 'var(--shape-corner-md)',
-                  }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: -20,
-                    left: 8,
-                    fontSize: 11,
-                    color: 'var(--md-on-surface-variant)',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {band.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <TaskLayerBands bands={graphLayout.layerBands} />
         <ReactFlow
           nodes={nodes}
           edges={rfEdges}
@@ -234,12 +183,14 @@ export default function GraphView() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onNodeDragStop={handleNodeDragStop}
           onEdgesDelete={(deletedEdges) => {
             for (const edge of deletedEdges) {
-              removeDependency(edge.id);
+              if (edge.data?.kind === 'dependency') removeDependency(edge.id);
             }
           }}
           nodeTypes={nodeTypes}
+          nodesDraggable={graphLayoutMode === 'edit'}
           fitView
           fitViewOptions={{ padding: 0.2 }}
           deleteKeyCode={['Backspace', 'Delete']}
@@ -268,25 +219,81 @@ export default function GraphView() {
 
 function toReactFlowNodes(
   tasks: Task[],
-  derived: Map<string, import('../../domain/models/task').DerivedTaskState>
+  derived: Map<string, import('../../domain/models/task').DerivedTaskState>,
+  positions: Map<string, { x: number; y: number; source: 'auto' | 'manual' }>
 ): Node[] {
   return tasks.map((task, i) => ({
     id: task.id,
     type: 'taskNode',
-    position: { x: (i % 5) * 200 + 50, y: Math.floor(i / 5) * 120 + 50 },
+    position: positions.get(task.id) ?? { x: (i % 5) * 240 + 50, y: Math.floor(i / 5) * 140 + 50 },
     data: {
       task,
       derivedState: derived.get(task.id),
+      layoutSource: positions.get(task.id)?.source ?? 'auto',
     },
   }));
 }
 
-function toReactFlowEdges(edges: DependencyEdge[]): Edge[] {
+function toReactFlowEdges(
+  edges: DependencyEdge[],
+  derived: Map<string, import('../../domain/models/task').DerivedTaskState>
+): Edge[] {
   return edges.map((edge) => ({
     id: edge.id,
     source: edge.fromTaskId,
     target: edge.toTaskId,
     type: 'smoothstep',
-    animated: false,
+    animated: derived.get(edge.toTaskId)?.unmetDependencyIds.includes(edge.fromTaskId) ?? false,
+    className: derived.get(edge.toTaskId)?.unmetDependencyIds.includes(edge.fromTaskId)
+      ? 'dependency-edge blocking-edge'
+      : 'dependency-edge',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    data: { kind: 'dependency' },
   }));
+}
+
+function toDecompositionEdges(tasks: Task[], visibleTaskIds: Set<string>): Edge[] {
+  return tasks
+    .filter((task) => task.parentId && visibleTaskIds.has(task.parentId))
+    .map((task) => ({
+      id: `decomposition:${task.parentId}:${task.id}`,
+      source: task.parentId!,
+      target: task.id,
+      type: 'smoothstep',
+      animated: false,
+      selectable: false,
+      focusable: false,
+      deletable: false,
+      className: 'decomposition-edge',
+      data: { kind: 'decomposition' },
+    }));
+}
+
+function TaskLayerBands({ bands }: { bands: GraphLayerBand[] }) {
+  if (bands.length === 0) return null;
+
+  return (
+    <div className="task-layer-band-layer">
+      {bands.map((band, i) => (
+        <div
+          className="task-layer-band"
+          key={band.id}
+          style={{
+            left: band.x,
+            top: band.y,
+            width: band.width,
+            height: band.height,
+          }}
+        >
+          <div
+            className="task-layer-band-surface"
+            style={{ background: RANK_COLORS[i % RANK_COLORS.length] }}
+          />
+          <div className="task-layer-band-label">
+            {band.label} · {band.taskIds.length} 个任务
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }

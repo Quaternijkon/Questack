@@ -102,7 +102,7 @@ export const useTaskStore = create<TaskStoreState>((set, get) => ({
       tasks: state.tasks.filter((t) => !idsToDelete.has(t.id)),
       selectedTaskId: state.selectedTaskId === id ? null : state.selectedTaskId,
     }));
-    useGraphStore.getState().loadEdges(useProjectStore().currentProjectId ?? '');
+    useGraphStore.getState().loadEdges(useProjectStore.getState().currentProjectId ?? '');
     get().refreshDerivedStates();
   },
 

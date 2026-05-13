@@ -13,6 +13,25 @@ export default function KeyboardShortcuts() {
   const setViewMode = useUIStore((s) => s.setViewMode);
   const toggleInspector = useUIStore((s) => s.toggleInspector);
 
+  const handleExport = useCallback(() => {
+    const projects = useProjectStore.getState().projects;
+    const pId = useProjectStore.getState().currentProjectId;
+    const tasks = useTaskStore.getState().tasks;
+    const edges = useGraphStore.getState().edges;
+    const project = projects.find((p) => p.id === pId);
+    if (!project) return;
+    const projectTasks = tasks.filter((t) => t.projectId === pId);
+    const projectEdges = edges.filter((e) => e.projectId === pId);
+    const json = exportToJson([project], projectTasks, projectEdges);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `questack-${project.name}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -46,27 +65,8 @@ export default function KeyboardShortcuts() {
         }
       }
     },
-    [currentProjectId, createTask, selectedTaskId, deleteTask, setViewMode, toggleInspector]
+    [currentProjectId, createTask, selectedTaskId, deleteTask, setViewMode, toggleInspector, handleExport]
   );
-
-  const handleExport = () => {
-    const projects = useProjectStore.getState().projects;
-    const pId = useProjectStore.getState().currentProjectId;
-    const tasks = useTaskStore.getState().tasks;
-    const edges = useGraphStore.getState().edges;
-    const project = projects.find((p) => p.id === pId);
-    if (!project) return;
-    const projectTasks = tasks.filter((t) => t.projectId === pId);
-    const projectEdges = edges.filter((e) => e.projectId === pId);
-    const json = exportToJson([project], projectTasks, projectEdges);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `questack-${project.name}-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);

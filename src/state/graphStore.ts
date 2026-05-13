@@ -85,7 +85,7 @@ export const useGraphStore = create<GraphStoreState>((set, get) => ({
     const readyTasks = computeReadyTasks(tasks, edges, childMap);
     const blockedReasons = computeBlockedReasons(tasks, edges);
 
-    let topologicalOrder: string[] = [];
+    let topologicalOrder: string[];
     try {
       topologicalOrder = topologicalSort(tasks, edges);
     } catch {

@@ -4,7 +4,7 @@ import type { ProjectRepository } from '../ProjectRepository';
 
 export class IndexedDbProjectRepository implements ProjectRepository {
   async getAll(): Promise<Project[]> {
-    return db.projects.where('archivedAt').equals('').or('archivedAt').equals(null as unknown as string).toArray();
+    return db.projects.filter((project) => project.archivedAt == null || project.archivedAt === '').toArray();
   }
 
   async getById(id: string): Promise<Project | undefined> {

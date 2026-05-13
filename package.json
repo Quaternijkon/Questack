@@ -12,13 +12,20 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@xyflow/react": "^12.9.2",
+    "dagre": "^0.8.5",
+    "dexie": "^4.2.1",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "uuid": "^13.0.0",
+    "zod": "^3.25.76",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/dagre": "^0.7.53",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

@@ -944,7 +944,120 @@ Todo List 只能表达任务集合，不能表达“做 B 之前必须完成 A�
 
 ---
 
-## 20. 官方资料参考
+## 20. CI/CD 与部署
+
+### 20.1 GitHub Actions 自动部署到 GitHub Pages
+
+项目通过 GitHub Actions 实现 push 即部署。配置文件位于 `.github/workflows/deploy.yml`。
+
+#### 工作流触发条件
+
+```yaml
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+```
+
+每次推送到 `main` 分支，或手动触发 `workflow_dispatch`，都会执行构建和部署流程。
+
+#### 流水线步骤
+
+| 步骤 | 说明 |
+|---|---|
+| `actions/checkout@v4` | 拉取仓库代码 |
+| `actions/setup-node@v4` | 设置 Node.js 20 环境，启用 npm cache |
+| `npm ci` | 严格按 lock 文件安装依赖，保证 CI 环境与本地一致 |
+| `npm run build` | TypeScript 编译 + Vite 生产构建，输出到 `dist/` |
+| `npm test` | 运行 Vitest 单元测试（38 个用例），任一失败则流水线中断 |
+| `upload-pages-artifact@v3` | 将 `dist/` 目录上传为 Pages 部署制品 |
+| `deploy-pages@v4` | 将制品部署到 GitHub Pages |
+
+#### 完整 Workflow 文件
+
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
+```
+
+### 20.2 Vite 基础路径配置
+
+由于部署到 GitHub Pages 的路径为 `https://<username>.github.io/<repo>/`，需要在 `vite.config.ts` 中设置 `base`：
+
+```ts
+export default defineConfig({
+  plugins: [react()],
+  base: '/Questack/',
+  // ...
+});
+```
+
+### 20.3 GitHub Pages 启用步骤
+
+在仓库的 **Settings → Pages** 中：
+
+1. **Source** 选择 `GitHub Actions`
+2. 推送代码到 `main` 分支后，Actions 自动运行
+3. 部署完成后，站点 URL 在 Actions 日志或 Settings → Pages 中可见
+
+### 20.4 依赖同步注意事项
+
+`npm ci` 要求 `package.json` 与 `package-lock.json` 严格同步。任何对 `package.json` 的手动修改必须随后运行 `npm install` 更新 lock 文件并一并提交。
+
+关键依赖清单（确保不被遗漏）：
+
+| 依赖 | 用途 |
+|---|---|
+| `zustand` | 状态管理 |
+| `@xyflow/react` | DAG 图可视化 |
+| `dagre` | 有向图自动布局 |
+| `dexie` | IndexedDB 封装 |
+| `zod` | 运行时 schema 校验 |
+| `uuid` | 任务/项目 ID 生成 |
+| `@types/dagre` | dagre TypeScript 类型 |
+
+---
+
+## 21. 官方资料参考
 
 以下资料用于确认推荐技术栈和实现方向：
 
@@ -954,4 +1067,6 @@ Todo List 只能表达任务集合，不能表达“做 B 之前必须完成 A�
 4. dagre 官方仓库：`https://github.com/dagrejs/dagre`
 5. Zod 官方文档：`https://zod.dev/`
 6. Playwright 官方文档：`https://playwright.dev/`
+7. GitHub Pages 文档：`https://docs.github.com/en/pages`
+8. GitHub Actions 文档：`https://docs.github.com/en/actions`
 

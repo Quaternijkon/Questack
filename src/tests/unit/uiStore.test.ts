@@ -5,6 +5,7 @@ describe('useUIStore graph layout state', () => {
   beforeEach(() => {
     localStorage.clear();
     useUIStore.setState({
+      themeMode: 'light',
       graphLayoutMode: 'auto',
       graphManualPositions: {},
     });
@@ -33,5 +34,14 @@ describe('useUIStore graph layout state', () => {
     expect(useUIStore.getState().getGraphManualPositions('project-2')).toEqual({
       'task-2': { x: 480, y: 320 },
     });
+  });
+
+  it('toggles and persists the visual theme mode', () => {
+    expect(useUIStore.getState().themeMode).toBe('light');
+
+    useUIStore.getState().toggleThemeMode();
+
+    expect(useUIStore.getState().themeMode).toBe('dark');
+    expect(localStorage.getItem('questack:themeMode')).toBe('dark');
   });
 });

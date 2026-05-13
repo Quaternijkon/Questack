@@ -2,12 +2,15 @@ import { create } from 'zustand';
 
 export type ViewMode = 'tree' | 'graph' | 'ready-queue' | 'roadmap';
 export type InspectorTab = 'details' | 'dependencies' | 'activity';
+export type ThemeMode = 'light' | 'dark';
 export type GraphLayoutMode = 'auto' | 'edit';
 export type GraphManualPositions = Record<string, Record<string, { x: number; y: number }>>;
 
 const GRAPH_MANUAL_POSITIONS_KEY = 'questack:graphManualPositions';
+const THEME_MODE_KEY = 'questack:themeMode';
 
 export interface UIStoreState {
+  themeMode: ThemeMode;
   viewMode: ViewMode;
   inspectorOpen: boolean;
   inspectorTab: InspectorTab;
@@ -19,6 +22,8 @@ export interface UIStoreState {
   graphLayoutMode: GraphLayoutMode;
   graphManualPositions: GraphManualPositions;
 
+  setThemeMode: (mode: ThemeMode) => void;
+  toggleThemeMode: () => void;
   setViewMode: (mode: ViewMode) => void;
   toggleInspector: () => void;
   openInspector: (tab?: InspectorTab) => void;
@@ -38,6 +43,7 @@ export interface UIStoreState {
 }
 
 export const useUIStore = create<UIStoreState>((set, get) => ({
+  themeMode: loadThemeMode(),
   viewMode: 'tree',
   inspectorOpen: false,
   inspectorTab: 'details',
@@ -48,6 +54,17 @@ export const useUIStore = create<UIStoreState>((set, get) => ({
   selectedProjectId: null,
   graphLayoutMode: 'auto',
   graphManualPositions: loadGraphManualPositions(),
+
+  setThemeMode: (mode) => {
+    persistThemeMode(mode);
+    set({ themeMode: mode });
+  },
+
+  toggleThemeMode: () => {
+    const next = get().themeMode === 'light' ? 'dark' : 'light';
+    persistThemeMode(next);
+    set({ themeMode: next });
+  },
 
   setViewMode: (mode) => set({ viewMode: mode }),
 
@@ -112,6 +129,17 @@ export const useUIStore = create<UIStoreState>((set, get) => ({
 
   getGraphManualPositions: (projectId) => get().graphManualPositions[projectId] ?? {},
 }));
+
+function loadThemeMode(): ThemeMode {
+  if (typeof localStorage === 'undefined') return 'light';
+  const stored = localStorage.getItem(THEME_MODE_KEY);
+  return stored === 'dark' ? 'dark' : 'light';
+}
+
+function persistThemeMode(mode: ThemeMode) {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(THEME_MODE_KEY, mode);
+}
 
 function loadGraphManualPositions(): GraphManualPositions {
   if (typeof localStorage === 'undefined') return {};

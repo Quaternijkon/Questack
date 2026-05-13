@@ -1,4 +1,18 @@
 import { useState } from 'react';
+import {
+  CheckSquare,
+  Download,
+  GitBranch,
+  Map,
+  Moon,
+  Plus,
+  Route,
+  Sparkles,
+  Sun,
+  Trash2,
+  Upload,
+  type LucideIcon,
+} from 'lucide-react';
 import { useProjectStore } from '../../state/projectStore';
 import { useTaskStore } from '../../state/taskStore';
 import { useUIStore, type ViewMode } from '../../state/uiStore';
@@ -19,6 +33,8 @@ export default function Sidebar() {
   const edges = useGraphStore((s) => s.edges);
   const viewMode = useUIStore((s) => s.viewMode);
   const setViewMode = useUIStore((s) => s.setViewMode);
+  const themeMode = useUIStore((s) => s.themeMode);
+  const toggleThemeMode = useUIStore((s) => s.toggleThemeMode);
 
   const [importModal, setImportModal] = useState(false);
   const [importErrors, setImportErrors] = useState<string[]>([]);
@@ -97,11 +113,11 @@ export default function Sidebar() {
     await loadProjects();
   };
 
-  const views: { mode: ViewMode; label: string }[] = [
-    { mode: 'tree', label: '任务树' },
-    { mode: 'graph', label: '依赖图' },
-    { mode: 'ready-queue', label: '待办队列' },
-    { mode: 'roadmap', label: '路线图' },
+  const views: { mode: ViewMode; label: string; icon: LucideIcon }[] = [
+    { mode: 'tree', label: '任务树', icon: CheckSquare },
+    { mode: 'graph', label: '依赖图', icon: GitBranch },
+    { mode: 'ready-queue', label: '待办队列', icon: Route },
+    { mode: 'roadmap', label: '路线图', icon: Map },
   ];
 
   return (
@@ -110,10 +126,13 @@ export default function Sidebar() {
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <div className="sidebar-logo">Q</div>
-            <span className="sidebar-headline">Questack</span>
+            <div>
+              <span className="sidebar-headline">Questack</span>
+              <span className="sidebar-subhead">DAG execution system</span>
+            </div>
           </div>
-          <button className="m3-icon-btn" onClick={handleCreate} title="新建项目">
-            +
+          <button className="m3-icon-btn" onClick={handleCreate} title="新建项目" aria-label="新建项目">
+            <Plus size={18} />
           </button>
         </div>
 
@@ -121,13 +140,14 @@ export default function Sidebar() {
           {currentProjectId && (
             <>
               <div className="nav-section-label">视图切换</div>
-              {views.map((v) => (
+              {views.map(({ mode, label, icon: Icon }) => (
                 <div
-                  key={v.mode}
-                  className={`nav-item ${viewMode === v.mode ? 'active' : ''}`}
-                  onClick={() => setViewMode(v.mode)}
+                  key={mode}
+                  className={`nav-item ${viewMode === mode ? 'active' : ''}`}
+                  onClick={() => setViewMode(mode)}
                 >
-                  {v.label}
+                  <Icon size={17} />
+                  {label}
                 </div>
               ))}
             </>
@@ -140,17 +160,19 @@ export default function Sidebar() {
               className={`nav-item ${p.id === currentProjectId ? 'active' : ''}`}
               onClick={() => setCurrentProject(p.id)}
             >
+              <Sparkles size={16} />
               <span>{p.name}</span>
               <button
                 className="m3-icon-btn m3-icon-btn-sm"
-                style={{ fontSize: 12, marginLeft: 'auto' }}
+                style={{ marginLeft: 'auto' }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(p.id, p.name);
                 }}
                 title="删除项目"
+                aria-label="删除项目"
               >
-                x
+                <Trash2 size={14} />
               </button>
             </div>
           ))}
@@ -159,11 +181,17 @@ export default function Sidebar() {
         <div style={{ flex: 1 }} />
 
         <div className="sidebar-footer">
+          <button className="theme-toggle" onClick={toggleThemeMode} type="button">
+            {themeMode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            <span>{themeMode === 'dark' ? '切换浅色' : '切换深色'}</span>
+          </button>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="m3-btn m3-btn-outlined m3-btn-sm" onClick={handleExport} disabled={!currentProjectId}>
+              <Download size={14} />
               导出
             </button>
             <button className="m3-btn m3-btn-outlined m3-btn-sm" onClick={handleImportClick}>
+              <Upload size={14} />
               导入
             </button>
             <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={handleLoadSample}>

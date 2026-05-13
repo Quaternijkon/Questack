@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# Questack
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A local-first DAG task roadmap web application. Break complex goals into task trees with dependency graphs, and let the system tell you exactly what to work on next.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Infinite Task Tree**: Organize goals into hierarchical task trees with unlimited nesting
+- **DAG Dependency Graph**: Express "A must complete before B" relationships with full cycle detection
+- **Ready Queue**: System auto-computes which leaf tasks are unblocked and ready to execute
+- **Roadmap View**: Topological sort generates execution order; blocked tasks show exact reasons
+- **Graph Visualization**: React Flow canvas with dagre auto-layout, drag-to-connect edges
+- **Material Design 3**: Dark theme with M3 color tokens, elevation, typography, and motion
+- **Offline-First**: All data persisted in IndexedDB (via Dexie); works entirely offline
+- **Import/Export**: Full JSON export/import with validation (cycle detection, cross-project checks)
+- **Keyboard Shortcuts**: Ctrl+1-4 for views, Ctrl+N for new task, Ctrl+E for export
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 + TypeScript + Vite |
+| State | Zustand |
+| Graph Viz | React Flow (@xyflow/react) + dagre auto-layout |
+| Persistence | IndexedDB via Dexie |
+| Testing | Vitest (38 unit tests) |
+| Deployment | GitHub Pages (automatic via Actions) |
 
-## Expanding the ESLint configuration
+## Architecture
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+  domain/         Pure business logic (models, services, algorithms)
+  repositories/   Data persistence abstraction (IndexedDB via Dexie)
+  state/          Zustand stores connecting repositories to UI
+  components/     React UI components (tree, graph, queue, inspector)
+  tests/          Unit tests for core algorithms
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # Start dev server
+npm run build    # Production build
+npm test         # Run 38 unit tests
 ```
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+1` | Tree View |
+| `Ctrl+2` | Graph View |
+| `Ctrl+3` | Ready Queue |
+| `Ctrl+4` | Roadmap |
+| `Ctrl+N` | New Task |
+| `Ctrl+E` | Export JSON |
+| `Ctrl+I` | Toggle Inspector |
+| `Delete` | Delete selected task |
+
+## Project Status
+
+MVP complete. All core features implemented per the [engineering plan](./dag-task-roadmap-webapp-plan.md).

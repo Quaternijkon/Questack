@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTaskStore } from '../../state/taskStore';
 import { useUIStore } from '../../state/uiStore';
 
@@ -20,6 +21,10 @@ export default function TaskTreeItem({
   const derivedStates = useTaskStore((s) => s.derivedStates);
   const toggleTaskExpanded = useUIStore((s) => s.toggleTaskExpanded);
   const isExpanded = useUIStore((s) => s.isTaskExpanded);
+  const updateTask = useTaskStore((s) => s.updateTask);
+
+  const [editingTitle, setEditingTitle] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   const isLeaf = (useTaskStore.getState().getChildMap().get(task.id) ?? []).length === 0;
   const derived = derivedStates.get(task.id);
@@ -35,9 +40,39 @@ export default function TaskTreeItem({
   const statusLabel = derived?.computedStatus ?? task.manualStatus;
   const rollupLabel = derived?.rollupStatus;
 
+  const progressPercent =
+    !isLeaf && derived && derived.descendantCount > 0
+      ? Math.round((derived.completedDescendantCount / derived.descendantCount) * 100)
+      : 0;
+
   const getStatusClass = () => {
     if (isLeaf) return statusLabel;
     return rollupLabel ?? 'todo';
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingTitle(task.id);
+    setEditValue(task.title || '');
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (editValue.trim()) {
+        updateTask(task.id, { title: editValue.trim() });
+      }
+      setEditingTitle(null);
+    } else if (e.key === 'Escape') {
+      setEditingTitle(null);
+    }
+  };
+
+  const handleEditBlur = () => {
+    if (editValue.trim()) {
+      updateTask(task.id, { title: editValue.trim() });
+    }
+    setEditingTitle(null);
   };
 
   return (
@@ -49,7 +84,7 @@ export default function TaskTreeItem({
         onContextMenu={(e) => onContextMenu(e, task.id)}
       >
         <button
-          className="toggle-btn"
+          className={`tree-toggle ${expanded ? 'expanded' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
             if (hasChildren) toggleTaskExpanded(task.id);
@@ -58,11 +93,38 @@ export default function TaskTreeItem({
         >
           {expanded ? 'v' : '>'}
         </button>
-        <span className={`priority-dot ${task.priority}`} />
-        <span className="task-title">{task.title || '(untitled)'}</span>
-        <span className={`status-badge ${getStatusClass()}`}>
-          {isLeaf ? statusLabel : (rollupLabel ?? '...')}
-        </span>
+        <span className={`priority-indicator ${task.priority}`} />
+        {editingTitle === task.id ? (
+          <input
+            className="tree-title-input"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleEditKeyDown}
+            onBlur={handleEditBlur}
+            autoFocus
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span
+            className="tree-title"
+            onDoubleClick={handleDoubleClick}
+          >
+            {task.title || '(untitled)'}
+          </span>
+        )}
+        {!isLeaf && derived && derived.descendantCount > 0 && (
+          <div className="tree-progress-bar">
+            <div
+              className="tree-progress-bar-fill"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        )}
+        <div className="tree-meta">
+          <span className={`status-badge ${getStatusClass()}`}>
+            {isLeaf ? statusLabel : (rollupLabel ?? '...')}
+          </span>
+        </div>
       </div>
       {hasChildren && expanded &&
         children.map((child) => (

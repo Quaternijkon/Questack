@@ -21,8 +21,8 @@ export default function TaskInspector() {
 
   return (
     <div>
-      <div className="form-group">
-        <label>Title</label>
+      <div className="m3-form-field">
+        <label className="m3-form-label">Title</label>
         <input
           value={task.title}
           onChange={(e) => handleChange('title', e.target.value)}
@@ -30,8 +30,8 @@ export default function TaskInspector() {
         />
       </div>
 
-      <div className="form-group">
-        <label>Description</label>
+      <div className="m3-form-field">
+        <label className="m3-form-label">Description</label>
         <textarea
           value={task.description ?? ''}
           onChange={(e) => handleChange('description', e.target.value)}
@@ -39,8 +39,8 @@ export default function TaskInspector() {
         />
       </div>
 
-      <div className="form-group">
-        <label>Status</label>
+      <div className="m3-form-field">
+        <label className="m3-form-label">Status</label>
         <select
           value={task.manualStatus}
           onChange={(e) => updateTaskManualStatus(task.id, e.target.value as ManualTaskStatus)}
@@ -52,8 +52,8 @@ export default function TaskInspector() {
         </select>
       </div>
 
-      <div className="form-group">
-        <label>Priority</label>
+      <div className="m3-form-field">
+        <label className="m3-form-label">Priority</label>
         <select
           value={task.priority}
           onChange={(e) => handleChange('priority', e.target.value as Priority)}
@@ -65,8 +65,8 @@ export default function TaskInspector() {
         </select>
       </div>
 
-      <div className="form-group">
-        <label>Estimated Minutes</label>
+      <div className="m3-form-field">
+        <label className="m3-form-label">Estimated Minutes</label>
         <input
           type="number"
           value={task.estimateMinutes ?? ''}
@@ -80,26 +80,30 @@ export default function TaskInspector() {
 
       {derived && (
         <>
-          <div className="form-group">
-            <label>Computed Status</label>
-            <span className={`status-badge ${derived.computedStatus}`}>{derived.computedStatus}</span>
+          <div className="m3-form-field">
+            <label className="m3-form-label">Computed Status</label>
+            <div className="m3-form-helper">
+              <span className={`status-badge ${derived.computedStatus}`}>{derived.computedStatus}</span>
+            </div>
           </div>
           {derived.rollupStatus && (
-            <div className="form-group">
-              <label>Rollup Status</label>
-              <span className={`status-badge ${derived.rollupStatus}`}>{derived.rollupStatus}</span>
+            <div className="m3-form-field">
+              <label className="m3-form-label">Rollup Status</label>
+              <div className="m3-form-helper">
+                <span className={`status-badge ${derived.rollupStatus}`}>{derived.rollupStatus}</span>
+              </div>
             </div>
           )}
-          <div className="form-group">
-            <label>Path</label>
-            <div style={{ fontSize: 11, color: 'var(--color-text-dim)' }}>
+          <div className="m3-form-field">
+            <label className="m3-form-label">Path</label>
+            <div className="m3-form-helper">
               {derived.path.length > 0
                 ? tasks.filter((t) => derived.path.includes(t.id)).map((t) => t.title).join(' > ')
                 : '(root)'}
             </div>
           </div>
           {derived.unmetDependencyIds.length > 0 && (
-            <div className="blocked-reason">
+            <div className="roadmap-item-blocked-by">
               Blocked by: {derived.unmetDependencyIds.map((id) => {
                 const t = tasks.find((t) => t.id === id);
                 return t?.title || id;

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -29,6 +29,7 @@ export default function GraphView() {
   const derivedStates = useTaskStore((s) => s.derivedStates);
   const edges = useGraphStore((s) => s.edges);
   const addDependency = useGraphStore((s) => s.addDependency);
+  const removeDependency = useGraphStore((s) => s.removeDependency);
   const selectTask = useTaskStore((s) => s.selectTask);
   const openInspector = useUIStore((s) => s.openInspector);
   const graphFilter = useUIStore((s) => s.graphFilter);
@@ -65,6 +66,23 @@ export default function GraphView() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
   const [rfEdges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+
+  const hasLaidOut = useRef(false);
+  useEffect(() => {
+    if (filteredTasks.length > 0 && !hasLaidOut.current) {
+      const timer = setTimeout(() => {
+        const layouted = layoutGraph(filteredTasks, filteredEdges, 'TB');
+        setNodes((nds) =>
+          nds.map((n) => {
+            const pos = layouted.get(n.id);
+            return pos ? { ...n, position: pos } : n;
+          })
+        );
+        hasLaidOut.current = true;
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [filteredTasks.length]);
 
   const onConnect = useCallback(
     async (connection: Connection) => {
@@ -117,22 +135,20 @@ export default function GraphView() {
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="toolbar">
-        <button className="btn btn-secondary btn-sm" onClick={handleLayout}>
+    <div className="graph-container" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="main-toolbar">
+        <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={handleLayout}>
           Auto Layout
         </button>
-        <div className="graph-filter-bar">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              className={graphFilter === f.key ? 'active' : ''}
-              onClick={() => setGraphFilter(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        {filters.map((f) => (
+          <button
+            key={f.key}
+            className={`m3-chip${graphFilter === f.key ? ' selected' : ''}`}
+            onClick={() => setGraphFilter(f.key)}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
       <div style={{ flex: 1 }}>
         <ReactFlow
@@ -142,6 +158,11 @@ export default function GraphView() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgesDelete={(deletedEdges) => {
+            for (const edge of deletedEdges) {
+              removeDependency(edge.id);
+            }
+          }}
           nodeTypes={nodeTypes}
           fitView
           deleteKeyCode={['Backspace', 'Delete']}

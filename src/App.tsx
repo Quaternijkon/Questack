@@ -3,6 +3,7 @@ import { useProjectStore } from './state/projectStore';
 import { useTaskStore } from './state/taskStore';
 import { useGraphStore } from './state/graphStore';
 import { ProjectShell } from './components/layout/ProjectShell';
+import KeyboardShortcuts from './components/common/KeyboardShortcuts';
 
 export default function App() {
   const loadProjects = useProjectStore((s) => s.loadProjects);
@@ -21,5 +22,10 @@ export default function App() {
     }
   }, [currentProjectId, loadTasks, loadEdges]);
 
-  return <ProjectShell />;
+  return (
+    <>
+      <KeyboardShortcuts />
+      <ProjectShell />
+    </>
+  );
 }

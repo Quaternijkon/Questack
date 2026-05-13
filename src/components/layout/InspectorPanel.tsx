@@ -15,19 +15,19 @@ export default function InspectorPanel() {
   return (
     <aside className="inspector-panel">
       <div className="inspector-header">
-        <span style={{ fontWeight: 600, fontSize: 14 }}>Task Inspector</span>
-        <button className="btn-icon" onClick={closeInspector}>x</button>
+        <span className="inspector-header-title">Task Inspector</span>
+        <button className="m3-icon-btn" onClick={closeInspector}>x</button>
       </div>
 
       <div className="inspector-tabs">
         <button
-          className={inspectorTab === 'details' ? 'active' : ''}
+          className={`inspector-tab ${inspectorTab === 'details' ? 'active' : ''}`}
           onClick={() => setInspectorTab('details')}
         >
           Details
         </button>
         <button
-          className={inspectorTab === 'dependencies' ? 'active' : ''}
+          className={`inspector-tab ${inspectorTab === 'dependencies' ? 'active' : ''}`}
           onClick={() => setInspectorTab('dependencies')}
         >
           Dependencies

@@ -15,9 +15,10 @@ export default function TaskTreeView() {
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; taskId: string } | null>(null);
 
-  if (!currentProjectId) {
+    if (!currentProjectId) {
     return (
       <div className="empty-state">
+        <span className="empty-state-icon">📁</span>
         <h3>No project selected</h3>
         <p>Create or select a project from the sidebar.</p>
       </div>
@@ -47,13 +48,15 @@ export default function TaskTreeView() {
 
   return (
     <div className="task-tree" onClick={() => setContextMenu(null)}>
-      <div className="toolbar">
-        <button className="btn btn-primary btn-sm" onClick={handleAddRoot}>
+      <div className="main-toolbar">
+        <h2 className="toolbar-title">Tasks</h2>
+        <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddRoot}>
           + Add Task
         </button>
       </div>
       {rootTasks.length === 0 ? (
         <div className="empty-state">
+          <span className="empty-state-icon">📋</span>
           <h3>No tasks yet</h3>
           <p>Click "Add Task" to start breaking down your goal.</p>
         </div>

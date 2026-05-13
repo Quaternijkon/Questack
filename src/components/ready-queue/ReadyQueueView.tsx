@@ -47,7 +47,8 @@ export default function ReadyQueueView() {
   if (readyTasks.length === 0) {
     return (
       <div className="ready-queue">
-        <div className="empty-state">
+        <div className="queue-empty">
+          <span className="queue-empty-icon">check_circle</span>
           <h3>Nothing ready to do</h3>
           <p>All tasks are either blocked, in progress, or completed. Check the Roadmap or Graph view.</p>
         </div>
@@ -57,29 +58,29 @@ export default function ReadyQueueView() {
 
   return (
     <div className="ready-queue">
-      <div className="toolbar">
-        <span className="section-title">Ready Queue ({readyTasks.length})</span>
+      <div className="queue-header">
+        <span className="toolbar-title">Ready Queue ({readyTasks.length})</span>
       </div>
       {readyTasks.map((task) => (
         <div
           key={task.id}
-          className="ready-task-card"
+          className="queue-card"
           onClick={() => handleSelect(task.id)}
           style={{ cursor: 'pointer' }}
         >
-          <span className={`priority-dot ${task.priority}`} />
-          <div className="task-info">
-            <div className="task-path">{getTaskPath(task.id)}</div>
-            <div style={{ fontSize: 14, fontWeight: 500 }}>{task.title || '(untitled)'}</div>
+          <span className={`priority-indicator priority-${task.priority}`} />
+          <div className="queue-card-main">
+            <div className="queue-card-path">{getTaskPath(task.id)}</div>
+            <div className="queue-card-title">{task.title || '(untitled)'}</div>
             {task.estimateMinutes && (
-              <div style={{ fontSize: 11, color: 'var(--color-text-dim)', marginTop: 2 }}>
+              <div className="queue-card-meta">
                 ~{task.estimateMinutes} min
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div className="queue-card-actions">
             <button
-              className="btn btn-primary btn-sm"
+              className="m3-btn-filled-tonal m3-btn-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleStart(task.id);
@@ -88,7 +89,7 @@ export default function ReadyQueueView() {
               Start
             </button>
             <button
-              className="btn btn-secondary btn-sm"
+              className="m3-btn-outlined m3-btn-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleComplete(task.id);

@@ -35,9 +35,10 @@ function EmptyStart() {
 
   return (
     <div className="empty-state">
+      <div className="empty-state-icon">Q</div>
       <h3>Welcome to Questack</h3>
       <p>Break complex goals into task trees with dependency DAGs. Create your first project to get started.</p>
-      <button className="btn btn-primary" onClick={handleCreate}>
+      <button className="m3-btn m3-btn-filled" onClick={handleCreate}>
         Create Project
       </button>
     </div>

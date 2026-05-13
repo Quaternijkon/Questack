@@ -71,22 +71,23 @@ export default function TaskContextMenu({ x, y, taskId, onClose }: TaskContextMe
   return (
     <div
       ref={ref}
-      className="context-menu"
+      className="m3-menu"
       style={{ left: x, top: y }}
     >
-      <button className="context-menu-item" onClick={handleInspect}>
+      <button className="m3-menu-item" onClick={handleInspect}>
         Inspect
       </button>
-      <button className="context-menu-item" onClick={handleViewDeps}>
+      <button className="m3-menu-item" onClick={handleViewDeps}>
         View Dependencies
       </button>
-      <button className="context-menu-item" onClick={handleAddChild}>
+      <button className="m3-menu-item" onClick={handleAddChild}>
         Add Subtask
       </button>
-      <button className="context-menu-item" onClick={handleAddSibling}>
+      <button className="m3-menu-item" onClick={handleAddSibling}>
         Add Sibling
       </button>
-      <button className="context-menu-item danger" onClick={handleDelete}>
+      <div className="m3-divider" />
+      <button className="m3-menu-item destructive" onClick={handleDelete}>
         Delete
       </button>
     </div>

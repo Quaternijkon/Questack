@@ -64,8 +64,8 @@ export default function RoadmapView() {
 
   return (
     <div className="roadmap-view">
-      <div className="toolbar">
-        <span className="section-title">Roadmap ({orderedTasks.length} tasks)</span>
+      <div className="roadmap-header">
+        <span className="toolbar-title">Roadmap ({orderedTasks.length} tasks)</span>
       </div>
       {orderedTasks.map((task) => {
         const derived = derivedStates.get(task.id);
@@ -79,12 +79,12 @@ export default function RoadmapView() {
             onClick={() => handleSelect(task.id)}
             style={{ cursor: 'pointer' }}
           >
-            <span className={`priority-dot ${task.priority}`} />
-            <div className="task-info">
-              <div className="task-path">{getPath(task.id)}</div>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>{task.title || '(untitled)'}</div>
+            <span className={`priority-indicator priority-${task.priority}`} />
+            <div className="roadmap-item-main">
+              <div className="roadmap-item-path">{getPath(task.id)}</div>
+              <div className="roadmap-item-title">{task.title || '(untitled)'}</div>
               {reason && (
-                <div className="blocked-reason" style={{ marginTop: 4 }}>
+                <div className="roadmap-item-blocked-by">
                   Blocked by: {reason.unmetPrerequisites.map((p) => p.title || p.id).join(', ')}
                 </div>
               )}
@@ -93,7 +93,7 @@ export default function RoadmapView() {
               <span className={`status-badge ${status}`}>{status}</span>
               {status === 'ready' && (
                 <button
-                  className="btn btn-secondary btn-sm"
+                  className="m3-btn-outlined m3-btn-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleComplete(task.id);

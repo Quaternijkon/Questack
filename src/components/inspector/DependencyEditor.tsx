@@ -50,25 +50,25 @@ export default function DependencyEditor() {
 
   return (
     <div>
-      <div className="form-group">
-        <label>Prerequisites (blocks this task)</label>
-        <ul className="dependency-list">
+      <div className="m3-form-field">
+        <label className="m3-form-label">Prerequisites (blocks this task)</label>
+        <ul className="dep-list">
           {incoming.map((e) => {
             const from = tasks.find((t) => t.id === e.fromTaskId);
             return (
-              <li key={e.id}>
+              <li className="dep-list-item" key={e.id}>
                 <span>{from?.title || e.fromTaskId}</span>
-                <button className="btn btn-ghost btn-sm" onClick={() => removeDependency(e.id)}>
+                <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)}>
                   Remove
                 </button>
               </li>
             );
           })}
           {incoming.length === 0 && (
-            <li style={{ color: 'var(--color-text-dim)', fontSize: 12 }}>No prerequisites</li>
+            <li className="dep-list-empty">No prerequisites</li>
           )}
         </ul>
-        <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+        <div className="dep-add-row">
           <select
             value={addTarget}
             onChange={(e) => setAddTarget(e.target.value)}
@@ -79,31 +79,31 @@ export default function DependencyEditor() {
               <option key={t.id} value={t.id}>{t.title || '(untitled)'}</option>
             ))}
           </select>
-          <button className="btn btn-primary btn-sm" onClick={handleAddIncoming}>
+          <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddIncoming}>
             Add
           </button>
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Blocks (depends on this task)</label>
-        <ul className="dependency-list">
+      <div className="m3-form-field">
+        <label className="m3-form-label">Blocks (depends on this task)</label>
+        <ul className="dep-list">
           {outgoing.map((e) => {
             const to = tasks.find((t) => t.id === e.toTaskId);
             return (
-              <li key={e.id}>
+              <li className="dep-list-item" key={e.id}>
                 <span>{to?.title || e.toTaskId}</span>
-                <button className="btn btn-ghost btn-sm" onClick={() => removeDependency(e.id)}>
+                <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)}>
                   Remove
                 </button>
               </li>
             );
           })}
           {outgoing.length === 0 && (
-            <li style={{ color: 'var(--color-text-dim)', fontSize: 12 }}>Doesn't block anything</li>
+            <li className="dep-list-empty">Doesn't block anything</li>
           )}
         </ul>
-        <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+        <div className="dep-add-row">
           <select
             value={addTarget}
             onChange={(e) => setAddTarget(e.target.value)}
@@ -114,13 +114,13 @@ export default function DependencyEditor() {
               <option key={t.id} value={t.id}>{t.title || '(untitled)'}</option>
             ))}
           </select>
-          <button className="btn btn-primary btn-sm" onClick={handleAddOutgoing}>
+          <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddOutgoing}>
             Add
           </button>
         </div>
       </div>
 
-      {error && <div className="blocked-reason">{error}</div>}
+      {error && <div className="notice-warning">{error}</div>}
     </div>
   );
 }

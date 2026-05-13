@@ -97,27 +97,42 @@ export default function Sidebar() {
     <>
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1>Questack</h1>
-          <button className="btn-icon" onClick={handleCreate} title="New Project">
+          <div className="sidebar-brand">
+            <div className="sidebar-logo">Q</div>
+            <span className="sidebar-headline">Questack</span>
+          </div>
+          <button className="m3-icon-btn" onClick={handleCreate} title="New Project">
             +
           </button>
         </div>
 
-        <div className="sidebar-section">
-          <div className="sidebar-section-label">Projects</div>
-        </div>
+        <div className="sidebar-nav">
+          {currentProjectId && (
+            <>
+              <div className="nav-section-label">Views</div>
+              {views.map((v) => (
+                <div
+                  key={v.mode}
+                  className={`nav-item ${viewMode === v.mode ? 'active' : ''}`}
+                  onClick={() => setViewMode(v.mode)}
+                >
+                  {v.label}
+                </div>
+              ))}
+            </>
+          )}
 
-        <div className="project-list">
+          <div className="nav-section-label">Projects</div>
           {projects.map((p) => (
             <div
               key={p.id}
-              className={`project-item ${p.id === currentProjectId ? 'active' : ''}`}
+              className={`nav-item ${p.id === currentProjectId ? 'active' : ''}`}
               onClick={() => setCurrentProject(p.id)}
             >
-              <span className="project-name">{p.name}</span>
+              <span>{p.name}</span>
               <button
-                className="btn-icon"
-                style={{ fontSize: 12 }}
+                className="m3-icon-btn m3-icon-btn-sm"
+                style={{ fontSize: 12, marginLeft: 'auto' }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(p.id, p.name);
@@ -130,33 +145,14 @@ export default function Sidebar() {
           ))}
         </div>
 
-        {currentProjectId && (
-          <div className="sidebar-section">
-            <div className="sidebar-section-label">Views</div>
-            <div className="view-switcher" style={{ flexDirection: 'column', gap: 2 }}>
-              {views.map((v) => (
-                <button
-                  key={v.mode}
-                  className={viewMode === v.mode ? 'active' : ''}
-                  onClick={() => setViewMode(v.mode)}
-                  style={{ textAlign: 'left', width: '100%' }}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div style={{ flex: 1 }} />
 
-        <div className="sidebar-section">
-          <div className="sidebar-section-label">Data</div>
+        <div className="sidebar-footer">
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-secondary btn-sm" onClick={handleExport} disabled={!currentProjectId}>
+            <button className="m3-btn m3-btn-outlined m3-btn-sm" onClick={handleExport} disabled={!currentProjectId}>
               Export
             </button>
-            <button className="btn btn-secondary btn-sm" onClick={handleImportClick}>
+            <button className="m3-btn m3-btn-outlined m3-btn-sm" onClick={handleImportClick}>
               Import
             </button>
           </div>
@@ -164,10 +160,10 @@ export default function Sidebar() {
       </aside>
 
       {importModal && (
-        <div className="modal-overlay" onClick={() => setImportModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="m3-dialog-overlay" onClick={() => setImportModal(false)}>
+          <div className="m3-dialog" onClick={(e) => e.stopPropagation()}>
             <h2>Import Project</h2>
-            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: 'var(--md-on-surface-variant)', marginBottom: 16 }}>
               Select a Questack JSON export file to import.
             </p>
             <input
@@ -177,18 +173,18 @@ export default function Sidebar() {
             />
             {importErrors.length > 0 && (
               <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-danger)', marginBottom: 4 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--md-error)', marginBottom: 4 }}>
                   Import Errors:
                 </div>
                 <ul className="import-error-list">
                   {importErrors.map((err, i) => (
-                    <li key={i}>{err}</li>
+                    <li key={i} className="import-error-item">{err}</li>
                   ))}
                 </ul>
               </div>
             )}
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setImportModal(false)}>
+            <div className="m3-dialog-actions">
+              <button className="m3-btn m3-btn-outlined" onClick={() => setImportModal(false)}>
                 Cancel
               </button>
             </div>

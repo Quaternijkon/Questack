@@ -12,12 +12,17 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
   const status = derivedState?.computedStatus ?? task.manualStatus;
 
   return (
-    <div className={`task-node ${status}`}>
+    <div className={`task-node status-${status}`}>
       <Handle type="target" position={Position.Top} />
-      <div className="node-title">{task.title || '(untitled)'}</div>
-      <div className="node-meta">
-        <span className={`status-badge ${status}`}>{status}</span>
-        <span className={`priority-dot ${task.priority}`} />
+      <div className="node-header">
+        <span className={`priority-indicator priority-${task.priority}`} />
+        <span className="node-title">{task.title || '(untitled)'}</span>
+        <span className={`status-badge status-${status}`}>{status}</span>
+      </div>
+      <div className="node-body">
+        {task.estimateMinutes != null && (
+          <span className="node-estimate">{task.estimateMinutes} min</span>
+        )}
       </div>
       <Handle type="source" position={Position.Bottom} />
     </div>

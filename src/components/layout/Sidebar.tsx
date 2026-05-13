@@ -4,6 +4,7 @@ import { useTaskStore } from '../../state/taskStore';
 import { useUIStore, type ViewMode } from '../../state/uiStore';
 import { useGraphStore } from '../../state/graphStore';
 import { exportToJson, importFromJson } from '../../domain/services/importExportService';
+import { loadSampleIntoStores } from '../../domain/services/loadSample';
 
 export default function Sidebar() {
   const projects = useProjectStore((s) => s.projects);
@@ -12,6 +13,8 @@ export default function Sidebar() {
   const createProject = useProjectStore((s) => s.createProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
   const loadProjects = useProjectStore((s) => s.loadProjects);
+  const loadTasks = useTaskStore((s) => s.loadTasks);
+  const loadEdges = useGraphStore((s) => s.loadEdges);
   const tasks = useTaskStore((s) => s.tasks);
   const edges = useGraphStore((s) => s.edges);
   const viewMode = useUIStore((s) => s.viewMode);
@@ -54,6 +57,14 @@ export default function Sidebar() {
   const handleImportClick = () => {
     setImportModal(true);
     setImportErrors([]);
+  };
+
+  const handleLoadSample = async () => {
+    const projectId = await loadSampleIntoStores();
+    await loadProjects();
+    setCurrentProject(projectId);
+    await loadTasks(projectId);
+    await loadEdges(projectId);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,6 +165,9 @@ export default function Sidebar() {
             </button>
             <button className="m3-btn m3-btn-outlined m3-btn-sm" onClick={handleImportClick}>
               导入
+            </button>
+            <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={handleLoadSample}>
+              示例
             </button>
           </div>
         </div>

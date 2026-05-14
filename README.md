@@ -1,6 +1,6 @@
 # Questack
 
-Current version: `0.4.0`
+Current version: `0.5.0`
 
 Questack is a local-first DAG task roadmap web application. It helps users break complex goals into task structures, connect tasks with prerequisite dependencies, and see what is ready, blocked, active, or complete.
 
@@ -11,15 +11,15 @@ Questack intentionally keeps two relationships separate:
 - **Task decomposition**: parent and child tasks describe how a goal is broken down.
 - **Task dependency**: directed edges describe "A must finish before B can start".
 
-The graph workspace currently shows one task group per view. A task group is a connected set of tasks formed by decomposition links and dependency links. Interdependent groups contain explicit dependency edges; independent groups do not.
+The graph workspace shows one task group per view. A task group is a connected set of tasks formed by decomposition links and dependency links. Interdependent groups contain explicit dependency edges; independent groups do not. In graph view, decomposition is expressed as task-map containment regions, while explicit dependencies remain directional left-to-right edges.
 
 ## Features
 
 - **Task Tree**: Organize goals into hierarchical task trees with unlimited nesting.
-- **Task Group Graph**: Show one independent or interdependent task group per graph view.
+- **Task Map Graph**: Show one independent or interdependent task group per graph view with set-style containment regions.
 - **Strict Graph Layout**: Top-to-bottom means task decomposition depth; left-to-right means dependency order.
 - **Status-Rich Nodes**: Show todo, ready, blocked, in progress, done, and canceled states directly on task nodes.
-- **DAG Dependency Graph**: Express prerequisite relationships with cycle detection.
+- **DAG Dependency Graph**: Express prerequisite relationships with cycle detection, ranked candidates, inspector editing, and direct graph-node creation.
 - **Ready Queue**: Auto-compute leaf tasks that are unblocked and ready to execute.
 - **Roadmap View**: Use topological order to show execution sequence and blocked reasons.
 - **Local-First Persistence**: Store all project data in IndexedDB through Dexie.
@@ -93,11 +93,20 @@ npx -p npm@10 npm ci
 
 Agent-readable plans live in `docs/superpowers/plans/`.
 
-Current next-stage plan:
+Most recent implementation plan:
 
 - [`2026-05-15-task-map-dependency-ux.md`](./docs/superpowers/plans/2026-05-15-task-map-dependency-ux.md): v0.5.0 plan for task-map decomposition visuals, task-tree expand reliability, and smoother dependency editing.
 
 ## Version History
+
+### 0.5.0 - Task Map And Dependency Editing UX
+
+- Added task-map set visuals for decomposition in graph view.
+- Fixed task-tree expand/collapse hit target, accessibility, and reactive expansion state.
+- Added ranked dependency candidates that filter duplicates, archived tasks, self-dependencies, and cycle risks.
+- Split incoming and outgoing dependency editing controls in the inspector.
+- Added direct graph dependency creation from node actions with source and target preview states.
+- Kept one task group per graph view and preserved top-to-bottom decomposition with left-to-right dependency order.
 
 ### 0.4.0 - Planning Baseline For Task Map And Dependency UX
 

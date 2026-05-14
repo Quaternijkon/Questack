@@ -32,6 +32,7 @@ import { useUIStore, type UIStoreState } from '../../state/uiStore';
 import TaskGraphNode from './GraphNode';
 import { layoutTaskGraph, type GraphLayerBand } from './layoutGraph';
 import { buildTaskGroups, type TaskGroup } from '../../domain/services/taskGroupService';
+import { buildTaskMapRegions, type TaskMapRegion } from '../../domain/services/taskMapService';
 import type { Task, DerivedTaskState, ManualTaskStatus, RollupStatus } from '../../domain/models/task';
 import type { DependencyEdge } from '../../domain/models/dependency';
 
@@ -120,6 +121,11 @@ export default function GraphView() {
   }, [groupTasks, derivedStates, graphFilter]);
 
   const visibleTaskIds = useMemo(() => new Set(visibleTasks.map((task) => task.id)), [visibleTasks]);
+
+  const taskMapRegions = useMemo(
+    () => buildTaskMapRegions(visibleTasks),
+    [visibleTasks]
+  );
 
   const visibleEdges = useMemo(
     () => groupEdges.filter((edge) => visibleTaskIds.has(edge.fromTaskId) && visibleTaskIds.has(edge.toTaskId)),
@@ -258,6 +264,11 @@ export default function GraphView() {
         >
           <ViewportPortal>
             <TaskLayerBands bands={graphLayout.layerBands} />
+            <TaskMapRegions
+              regions={taskMapRegions}
+              positions={graphLayout.positions}
+              tasks={visibleTasks}
+            />
           </ViewportPortal>
           <Background />
           <Controls />
@@ -416,10 +427,74 @@ function toDecompositionEdges(tasks: Task[], visibleTaskIds: Set<string>): Edge[
       selectable: false,
       focusable: false,
       deletable: false,
-      label: '拆解',
+      label: undefined,
       className: 'decomposition-edge',
       data: { kind: 'decomposition' },
     }));
+}
+
+function TaskMapRegions({
+  regions,
+  positions,
+  tasks,
+}: {
+  regions: TaskMapRegion[];
+  positions: Map<string, { x: number; y: number; source?: 'auto' | 'manual' }>;
+  tasks: Task[];
+}) {
+  if (regions.length === 0) return null;
+
+  const taskById = new Map(tasks.map((task) => [task.id, task]));
+
+  return (
+    <div className="task-map-region-layer">
+      {regions.map((region) => {
+        const bounds = getRegionBounds(region.descendantTaskIds, positions);
+        if (!bounds) return null;
+        const task = taskById.get(region.taskId);
+
+        return (
+          <div
+            className={`task-map-region depth-${Math.min(region.depth, 4)}`}
+            key={region.taskId}
+            style={{
+              left: bounds.x - 28,
+              top: bounds.y - 44,
+              width: bounds.width + 56,
+              height: bounds.height + 80,
+            }}
+          >
+            <div className="task-map-region-title">
+              {task?.title || '未命名任务集'}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getRegionBounds(
+  taskIds: string[],
+  positions: Map<string, { x: number; y: number; source?: 'auto' | 'manual' }>
+) {
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+
+  for (const taskId of taskIds) {
+    const position = positions.get(taskId);
+    if (!position) continue;
+
+    minX = Math.min(minX, position.x);
+    minY = Math.min(minY, position.y);
+    maxX = Math.max(maxX, position.x + 220);
+    maxY = Math.max(maxY, position.y + 112);
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
 function TaskLayerBands({ bands }: { bands: GraphLayerBand[] }) {

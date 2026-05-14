@@ -78,6 +78,10 @@ export default function GraphView() {
   const graphManualPositions = useUIStore((s) => s.graphManualPositions);
   const saveGraphNodePosition = useUIStore((s) => s.saveGraphNodePosition);
   const clearGraphManualPositions = useUIStore((s) => s.clearGraphManualPositions);
+  const dependencyDraft = useUIStore((s) => s.dependencyDraft);
+  const startDependencyDraft = useUIStore((s) => s.startDependencyDraft);
+  const setDependencyDraftTarget = useUIStore((s) => s.setDependencyDraftTarget);
+  const clearDependencyDraft = useUIStore((s) => s.clearDependencyDraft);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const activeTasks = useMemo(
@@ -139,6 +143,17 @@ export default function GraphView() {
     [updateTaskManualStatus]
   );
 
+  const handleStartDependencyDraft = useCallback(
+    (taskId: string) => {
+      if (dependencyDraft.sourceTaskId === taskId) {
+        clearDependencyDraft();
+        return;
+      }
+      startDependencyDraft(taskId);
+    },
+    [clearDependencyDraft, dependencyDraft.sourceTaskId, startDependencyDraft]
+  );
+
   const graphLayout = useMemo(() => {
     const manualPositions = currentProjectId && graphLayoutMode === 'edit'
       ? graphManualPositions[currentProjectId] ?? {}
@@ -151,8 +166,24 @@ export default function GraphView() {
   }, [visibleTasks, visibleEdges, currentProjectId, graphLayoutMode, graphManualPositions, selectedGroup]);
 
   const layoutedNodes = useMemo(() => {
-    return toReactFlowNodes(visibleTasks, derivedStates, graphLayout.positions, handleNodeStatusChange);
-  }, [visibleTasks, derivedStates, graphLayout.positions, handleNodeStatusChange]);
+    return toReactFlowNodes(
+      visibleTasks,
+      derivedStates,
+      graphLayout.positions,
+      handleNodeStatusChange,
+      handleStartDependencyDraft,
+      dependencyDraft.sourceTaskId,
+      dependencyDraft.targetTaskId
+    );
+  }, [
+    visibleTasks,
+    derivedStates,
+    graphLayout.positions,
+    handleNodeStatusChange,
+    handleStartDependencyDraft,
+    dependencyDraft.sourceTaskId,
+    dependencyDraft.targetTaskId,
+  ]);
 
   const layoutedEdges = useMemo(() => {
     return [
@@ -172,6 +203,12 @@ export default function GraphView() {
     setEdges(layoutedEdges);
   }, [layoutedEdges, setEdges]);
 
+  useEffect(() => {
+    if (dependencyDraft.sourceTaskId && !visibleTaskIds.has(dependencyDraft.sourceTaskId)) {
+      clearDependencyDraft();
+    }
+  }, [clearDependencyDraft, dependencyDraft.sourceTaskId, visibleTaskIds]);
+
   const onConnect = useCallback(
     async (connection: Connection) => {
       if (!connection.source || !connection.target || !currentProjectId) return;
@@ -184,11 +221,48 @@ export default function GraphView() {
   );
 
   const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
+    async (_: React.MouseEvent, node: Node) => {
+      if (dependencyDraft.sourceTaskId && dependencyDraft.sourceTaskId !== node.id && currentProjectId) {
+        const result = await addDependency(dependencyDraft.sourceTaskId, node.id, currentProjectId);
+        if (!result.success) {
+          alert(result.message);
+        }
+        clearDependencyDraft();
+        return;
+      }
+
+      if (dependencyDraft.sourceTaskId === node.id) {
+        clearDependencyDraft();
+      }
+
       selectTask(node.id);
       openInspector('details');
     },
-    [selectTask, openInspector]
+    [
+      addDependency,
+      clearDependencyDraft,
+      currentProjectId,
+      dependencyDraft.sourceTaskId,
+      openInspector,
+      selectTask,
+    ]
+  );
+
+  const onNodeMouseEnter = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      if (!dependencyDraft.sourceTaskId || dependencyDraft.sourceTaskId === node.id) return;
+      setDependencyDraftTarget(node.id);
+    },
+    [dependencyDraft.sourceTaskId, setDependencyDraftTarget]
+  );
+
+  const onNodeMouseLeave = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      if (dependencyDraft.targetTaskId === node.id) {
+        setDependencyDraftTarget(null);
+      }
+    },
+    [dependencyDraft.targetTaskId, setDependencyDraftTarget]
   );
 
   const handleRestoreAutoLayout = useCallback(() => {
@@ -246,6 +320,8 @@ export default function GraphView() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onNodeMouseEnter={onNodeMouseEnter}
+          onNodeMouseLeave={onNodeMouseLeave}
           onNodeDragStop={handleNodeDragStop}
           onEdgesDelete={(deletedEdges) => {
             for (const edge of deletedEdges) {
@@ -374,7 +450,10 @@ function toReactFlowNodes(
   tasks: Task[],
   derived: Map<string, DerivedTaskState>,
   positions: Map<string, { x: number; y: number; source: 'auto' | 'manual' }>,
-  onSetStatus: (taskId: string, status: ManualTaskStatus) => void
+  onSetStatus: (taskId: string, status: ManualTaskStatus) => void,
+  onStartDependency: (taskId: string) => void,
+  dependencySourceTaskId: string | null,
+  dependencyTargetTaskId: string | null
 ): Node[] {
   return tasks.map((task, index) => {
     const derivedState = derived.get(task.id);
@@ -388,6 +467,12 @@ function toReactFlowNodes(
         status: getDisplayStatus(task, derivedState),
         layoutSource: positions.get(task.id)?.source ?? 'auto',
         onSetStatus,
+        onStartDependency,
+        isDependencySource: dependencySourceTaskId === task.id,
+        isDependencyTargetPreview:
+          dependencySourceTaskId != null &&
+          dependencySourceTaskId !== task.id &&
+          dependencyTargetTaskId === task.id,
       },
     };
   });

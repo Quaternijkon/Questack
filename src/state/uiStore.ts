@@ -5,6 +5,10 @@ export type InspectorTab = 'details' | 'dependencies' | 'activity';
 export type ThemeMode = 'light' | 'dark';
 export type GraphLayoutMode = 'auto' | 'edit';
 export type GraphManualPositions = Record<string, Record<string, { x: number; y: number }>>;
+export type DependencyDraft = {
+  sourceTaskId: string | null;
+  targetTaskId: string | null;
+};
 
 const GRAPH_MANUAL_POSITIONS_KEY = 'questack:graphManualPositions';
 const THEME_MODE_KEY = 'questack:themeMode';
@@ -21,6 +25,7 @@ export interface UIStoreState {
   selectedProjectId: string | null;
   graphLayoutMode: GraphLayoutMode;
   graphManualPositions: GraphManualPositions;
+  dependencyDraft: DependencyDraft;
 
   setThemeMode: (mode: ThemeMode) => void;
   toggleThemeMode: () => void;
@@ -40,6 +45,9 @@ export interface UIStoreState {
   saveGraphNodePosition: (projectId: string, taskId: string, position: { x: number; y: number }) => void;
   clearGraphManualPositions: (projectId: string) => void;
   getGraphManualPositions: (projectId: string) => Record<string, { x: number; y: number }>;
+  startDependencyDraft: (sourceTaskId: string) => void;
+  setDependencyDraftTarget: (targetTaskId: string | null) => void;
+  clearDependencyDraft: () => void;
 }
 
 export const useUIStore = create<UIStoreState>((set, get) => ({
@@ -54,6 +62,7 @@ export const useUIStore = create<UIStoreState>((set, get) => ({
   selectedProjectId: null,
   graphLayoutMode: 'auto',
   graphManualPositions: loadGraphManualPositions(),
+  dependencyDraft: { sourceTaskId: null, targetTaskId: null },
 
   setThemeMode: (mode) => {
     persistThemeMode(mode);
@@ -128,6 +137,20 @@ export const useUIStore = create<UIStoreState>((set, get) => ({
     }),
 
   getGraphManualPositions: (projectId) => get().graphManualPositions[projectId] ?? {},
+
+  startDependencyDraft: (sourceTaskId) =>
+    set({ dependencyDraft: { sourceTaskId, targetTaskId: null } }),
+
+  setDependencyDraftTarget: (targetTaskId) =>
+    set((state) => ({
+      dependencyDraft: {
+        ...state.dependencyDraft,
+        targetTaskId,
+      },
+    })),
+
+  clearDependencyDraft: () =>
+    set({ dependencyDraft: { sourceTaskId: null, targetTaskId: null } }),
 }));
 
 function loadThemeMode(): ThemeMode {

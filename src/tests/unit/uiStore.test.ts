@@ -8,6 +8,7 @@ describe('useUIStore graph layout state', () => {
       themeMode: 'light',
       graphLayoutMode: 'auto',
       graphManualPositions: {},
+      dependencyDraft: { sourceTaskId: null, targetTaskId: null },
     });
   });
 
@@ -43,5 +44,28 @@ describe('useUIStore graph layout state', () => {
 
     expect(useUIStore.getState().themeMode).toBe('dark');
     expect(localStorage.getItem('questack:themeMode')).toBe('dark');
+  });
+
+  it('tracks dependency creation draft state', () => {
+    useUIStore.getState().startDependencyDraft('task-a');
+
+    expect(useUIStore.getState().dependencyDraft).toEqual({
+      sourceTaskId: 'task-a',
+      targetTaskId: null,
+    });
+
+    useUIStore.getState().setDependencyDraftTarget('task-b');
+
+    expect(useUIStore.getState().dependencyDraft).toEqual({
+      sourceTaskId: 'task-a',
+      targetTaskId: 'task-b',
+    });
+
+    useUIStore.getState().clearDependencyDraft();
+
+    expect(useUIStore.getState().dependencyDraft).toEqual({
+      sourceTaskId: null,
+      targetTaskId: null,
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Check, Play, RotateCcw } from 'lucide-react';
+import { Check, GitBranch, Play, RotateCcw } from 'lucide-react';
 import type { Task, DerivedTaskState, ManualTaskStatus } from '../../domain/models/task';
 
 type DisplayStatus = 'todo' | 'ready' | 'blocked' | 'in_progress' | 'done' | 'canceled';
@@ -11,6 +11,9 @@ interface TaskNodeData {
   status: DisplayStatus;
   layoutSource?: 'auto' | 'manual';
   onSetStatus?: (taskId: string, status: ManualTaskStatus) => void;
+  onStartDependency?: (taskId: string) => void;
+  isDependencySource?: boolean;
+  isDependencyTargetPreview?: boolean;
 }
 
 const statusLabels: Record<DisplayStatus, string> = {
@@ -23,7 +26,16 @@ const statusLabels: Record<DisplayStatus, string> = {
 };
 
 export default memo(function TaskGraphNode({ data }: NodeProps) {
-  const { task, derivedState, status, layoutSource, onSetStatus } = data as unknown as TaskNodeData;
+  const {
+    task,
+    derivedState,
+    status,
+    layoutSource,
+    onSetStatus,
+    onStartDependency,
+    isDependencySource,
+    isDependencyTargetPreview,
+  } = data as unknown as TaskNodeData;
   const isContainer = derivedState != null && !derivedState.isLeaf;
   const unmetCount = derivedState?.unmetDependencyIds.length ?? 0;
 
@@ -31,9 +43,19 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
     event.stopPropagation();
     onSetStatus?.(task.id, nextStatus);
   };
+  const stopActionPointer = (event: React.PointerEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+  const nodeClassName = [
+    'task-node',
+    `status-${status}`,
+    isContainer ? 'task-node-container' : '',
+    isDependencySource ? 'dependency-source' : '',
+    isDependencyTargetPreview ? 'dependency-target-preview' : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className={`task-node status-${status}${isContainer ? ' task-node-container' : ''}`}>
+    <div className={nodeClassName}>
       <Handle type="target" position={Position.Left} />
       <div className="node-header">
         <span className={`priority-indicator priority-${task.priority}`} />
@@ -58,20 +80,52 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
       </div>
       <div className="node-actions nodrag nopan">
         {task.manualStatus !== 'in_progress' && task.manualStatus !== 'done' && (
-          <button className="node-action-btn" onClick={setStatus('in_progress')} type="button" title="标记为进行中">
+          <button
+            className="node-action-btn"
+            onClick={setStatus('in_progress')}
+            onPointerDown={stopActionPointer}
+            type="button"
+            title="标记为进行中"
+          >
             <Play size={12} />
           </button>
         )}
         {task.manualStatus !== 'done' && (
-          <button className="node-action-btn" onClick={setStatus('done')} type="button" title="标记为完成">
+          <button
+            className="node-action-btn"
+            onClick={setStatus('done')}
+            onPointerDown={stopActionPointer}
+            type="button"
+            title="标记为完成"
+          >
             <Check size={13} />
           </button>
         )}
         {task.manualStatus !== 'todo' && (
-          <button className="node-action-btn" onClick={setStatus('todo')} type="button" title="重新打开">
+          <button
+            className="node-action-btn"
+            onClick={setStatus('todo')}
+            onPointerDown={stopActionPointer}
+            type="button"
+            title="重新打开"
+          >
             <RotateCcw size={12} />
           </button>
         )}
+        <button
+          aria-label="从此任务创建依赖"
+          aria-pressed={isDependencySource}
+          className={`node-action-btn ${isDependencySource ? 'active' : ''}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onStartDependency?.(task.id);
+          }}
+          onPointerDown={stopActionPointer}
+          type="button"
+          title="从此任务创建依赖"
+        >
+          <GitBranch size={12} />
+        </button>
       </div>
       <Handle type="source" position={Position.Right} />
     </div>

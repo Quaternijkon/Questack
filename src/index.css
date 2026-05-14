@@ -2066,6 +2066,25 @@ select:focus {
   padding: 0;
 }
 
+.node-action-btn.active {
+  border-color: var(--google-blue);
+  color: var(--google-blue);
+  background: rgba(66,133,244,0.14);
+}
+
+.task-node.dependency-source {
+  outline: 2px solid rgba(66,133,244,0.58);
+  outline-offset: 4px;
+}
+
+.task-node.dependency-target-preview {
+  outline: 2px solid rgba(52,168,83,0.55);
+  outline-offset: 4px;
+  box-shadow:
+    var(--elevation-2),
+    0 0 0 6px rgba(52,168,83,0.08);
+}
+
 .task-node.status-done .node-action-btn,
 .task-node.status-canceled .node-action-btn {
   opacity: 0.9;

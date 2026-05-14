@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useProjectStore } from '../../state/projectStore';
 import { useTaskStore } from '../../state/taskStore';
 import { useGraphStore } from '../../state/graphStore';
+import { getDependencyCandidates } from '../../domain/services/dependencySuggestionService';
 
 export default function DependencyEditor() {
   const selectedTaskId = useTaskStore((s) => s.selectedTaskId);
@@ -12,7 +13,8 @@ export default function DependencyEditor() {
   const currentProjectId = useProjectStore((s) => s.currentProjectId);
 
   const task = tasks.find((t) => t.id === selectedTaskId);
-  const [addTarget, setAddTarget] = useState('');
+  const [incomingTarget, setIncomingTarget] = useState('');
+  const [outgoingTarget, setOutgoingTarget] = useState('');
   const [error, setError] = useState('');
 
   if (!task) {
@@ -21,32 +23,44 @@ export default function DependencyEditor() {
 
   const incoming = edges.filter((e) => e.toTaskId === task.id);
   const outgoing = edges.filter((e) => e.fromTaskId === task.id);
+  const taskById = new Map(tasks.map((candidate) => [candidate.id, candidate]));
 
-  const otherTasks = tasks.filter(
-    (t) => t.id !== task.id && t.projectId === task.projectId && t.archivedAt == null
-  );
+  const incomingCandidates = getDependencyCandidates({
+    sourceTaskId: task.id,
+    direction: 'incoming',
+    tasks,
+    edges,
+  });
+  const outgoingCandidates = getDependencyCandidates({
+    sourceTaskId: task.id,
+    direction: 'outgoing',
+    tasks,
+    edges,
+  });
 
   const handleAddIncoming = async () => {
-    if (!addTarget || !currentProjectId) return;
-    const result = await addDependency(addTarget, task.id, currentProjectId);
+    if (!incomingTarget || !currentProjectId) return;
+    const result = await addDependency(incomingTarget, task.id, currentProjectId);
     if (!result.success) {
       setError(result.message ?? '添加依赖失败');
     } else {
-      setAddTarget('');
+      setIncomingTarget('');
       setError('');
     }
   };
 
   const handleAddOutgoing = async () => {
-    if (!addTarget || !currentProjectId) return;
-    const result = await addDependency(task.id, addTarget, currentProjectId);
+    if (!outgoingTarget || !currentProjectId) return;
+    const result = await addDependency(task.id, outgoingTarget, currentProjectId);
     if (!result.success) {
       setError(result.message ?? '添加依赖失败');
     } else {
-      setAddTarget('');
+      setOutgoingTarget('');
       setError('');
     }
   };
+
+  const taskTitle = (taskId: string) => taskById.get(taskId)?.title || '（未命名）';
 
   return (
     <div>
@@ -58,7 +72,7 @@ export default function DependencyEditor() {
             return (
               <li className="dep-list-item" key={e.id}>
                 <span>{from?.title || e.fromTaskId}</span>
-                <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)}>
+                <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)} type="button">
                   移除
                 </button>
               </li>
@@ -69,18 +83,27 @@ export default function DependencyEditor() {
           )}
         </ul>
         <div className="dep-add-row">
+          <label className="m3-form-label sr-only" htmlFor="incoming-dependency-select">
+            添加前置任务
+          </label>
           <select
-            value={addTarget}
-            onChange={(e) => setAddTarget(e.target.value)}
+            id="incoming-dependency-select"
+            value={incomingTarget}
+            onChange={(e) => setIncomingTarget(e.target.value)}
             style={{ flex: 1 }}
           >
             <option value="">选择必须首先完成的任务...</option>
-            {otherTasks.map((t) => (
-              <option key={t.id} value={t.id}>{t.title || '（未命名）'}</option>
+            {incomingCandidates.map((candidate) => (
+              <option key={candidate.taskId} value={candidate.taskId}>{taskTitle(candidate.taskId)}</option>
             ))}
           </select>
-          <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddIncoming}>
-            添加
+          <button
+            className="m3-btn-filled-tonal m3-btn-sm"
+            disabled={!incomingTarget || !currentProjectId}
+            onClick={handleAddIncoming}
+            type="button"
+          >
+            添加为前置
           </button>
         </div>
       </div>
@@ -93,7 +116,7 @@ export default function DependencyEditor() {
             return (
               <li className="dep-list-item" key={e.id}>
                 <span>{to?.title || e.toTaskId}</span>
-                <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)}>
+                <button className="m3-btn-text m3-btn-sm" onClick={() => removeDependency(e.id)} type="button">
                   移除
                 </button>
               </li>
@@ -104,18 +127,27 @@ export default function DependencyEditor() {
           )}
         </ul>
         <div className="dep-add-row">
+          <label className="m3-form-label sr-only" htmlFor="outgoing-dependency-select">
+            添加后续任务
+          </label>
           <select
-            value={addTarget}
-            onChange={(e) => setAddTarget(e.target.value)}
+            id="outgoing-dependency-select"
+            value={outgoingTarget}
+            onChange={(e) => setOutgoingTarget(e.target.value)}
             style={{ flex: 1 }}
           >
             <option value="">选择依赖于此任务的任务...</option>
-            {otherTasks.map((t) => (
-              <option key={t.id} value={t.id}>{t.title || '（未命名）'}</option>
+            {outgoingCandidates.map((candidate) => (
+              <option key={candidate.taskId} value={candidate.taskId}>{taskTitle(candidate.taskId)}</option>
             ))}
           </select>
-          <button className="m3-btn-filled-tonal m3-btn-sm" onClick={handleAddOutgoing}>
-            添加
+          <button
+            className="m3-btn-filled-tonal m3-btn-sm"
+            disabled={!outgoingTarget || !currentProjectId}
+            onClick={handleAddOutgoing}
+            type="button"
+          >
+            添加为后续
           </button>
         </div>
       </div>

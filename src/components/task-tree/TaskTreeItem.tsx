@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useTaskStore } from '../../state/taskStore';
 import { useUIStore } from '../../state/uiStore';
 
@@ -20,7 +21,7 @@ export default function TaskTreeItem({
   const tasks = useTaskStore((s) => s.tasks);
   const derivedStates = useTaskStore((s) => s.derivedStates);
   const toggleTaskExpanded = useUIStore((s) => s.toggleTaskExpanded);
-  const isExpanded = useUIStore((s) => s.isTaskExpanded);
+  const expandedTaskIds = useUIStore((s) => s.expandedTaskIds);
   const updateTask = useTaskStore((s) => s.updateTask);
 
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export default function TaskTreeItem({
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
   const hasChildren = children.length > 0;
-  const expanded = isExpanded(task.id);
+  const expanded = expandedTaskIds.has(task.id);
 
   const statusLabel = derived?.computedStatus ?? task.manualStatus;
   const rollupLabel = derived?.rollupStatus;
@@ -85,13 +86,22 @@ export default function TaskTreeItem({
       >
         <button
           className={`tree-toggle ${expanded ? 'expanded' : ''}`}
+          type="button"
+          aria-label={expanded ? '收起子任务' : '展开子任务'}
+          aria-expanded={hasChildren ? expanded : undefined}
+          disabled={!hasChildren}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             if (hasChildren) toggleTaskExpanded(task.id);
           }}
-          style={{ visibility: hasChildren ? 'visible' : 'hidden' }}
         >
-          {expanded ? 'v' : '>'}
+          {hasChildren ? (
+            expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+          ) : (
+            <span className="tree-toggle-placeholder" />
+          )}
         </button>
         <span className={`priority-indicator ${task.priority}`} />
         {editingTitle === task.id ? (

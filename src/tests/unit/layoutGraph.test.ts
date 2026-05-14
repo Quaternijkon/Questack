@@ -30,7 +30,7 @@ function makeEdge(id: string, fromTaskId: string, toTaskId: string): DependencyE
 }
 
 describe('layoutTaskGraph', () => {
-  it('puts independent root task groups into separate layer bands', () => {
+  it('wraps the currently displayed task group in one layer band', () => {
     const tasks = [
       makeTask('root-a', { title: 'Root A', sortOrder: 0 }),
       makeTask('a-child', { parentId: 'root-a', sortOrder: 0 }),
@@ -40,10 +40,10 @@ describe('layoutTaskGraph', () => {
 
     const layout = layoutTaskGraph(tasks, []);
 
-    expect(layout.layerBands.map((band) => band.rootTaskId)).toEqual(['root-a', 'root-b']);
-    expect(layout.layerBands[0].taskIds).toEqual(expect.arrayContaining(['root-a', 'a-child']));
-    expect(layout.layerBands[1].taskIds).toEqual(expect.arrayContaining(['root-b', 'b-child']));
-    expect(layout.layerBands[1].y).toBeGreaterThan(layout.layerBands[0].y);
+    expect(layout.layerBands).toHaveLength(1);
+    expect(layout.layerBands[0].taskIds).toEqual(
+      expect.arrayContaining(['root-a', 'a-child', 'root-b', 'b-child'])
+    );
   });
 
   it('uses vertical position for task decomposition and horizontal position for dependency order', () => {
@@ -62,6 +62,20 @@ describe('layoutTaskGraph', () => {
     expect(firstChild.y).toBeGreaterThan(root.y);
     expect(secondChild.y).toBeGreaterThan(root.y);
     expect(secondChild.x).toBeGreaterThan(firstChild.x);
+  });
+
+  it('keeps each hierarchy depth on a stable horizontal row', () => {
+    const tasks = [
+      makeTask('root'),
+      makeTask('child-a', { parentId: 'root', sortOrder: 0 }),
+      makeTask('child-b', { parentId: 'root', sortOrder: 1 }),
+      makeTask('grandchild', { parentId: 'child-b', sortOrder: 0 }),
+    ];
+
+    const layout = layoutTaskGraph(tasks, []);
+
+    expect(layout.positions.get('child-a')?.y).toBe(layout.positions.get('child-b')?.y);
+    expect(layout.positions.get('grandchild')!.y).toBeGreaterThan(layout.positions.get('child-b')!.y);
   });
 
   it('keeps manual positions in edit mode while still creating layer bands', () => {

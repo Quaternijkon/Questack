@@ -3,7 +3,7 @@ import { generateSampleData } from '../../domain/services/sampleData';
 import { validateExport } from '../../domain/services/importExportService';
 import { computeReadyTasks, computeBlockedReasons, topologicalSort } from '../../domain/services/graphService';
 import { buildChildMap, computeAllDerivedStates } from '../../domain/services/taskTreeService';
-import { layoutTaskGraph } from '../../components/graph/layoutGraph';
+import { buildTaskGroups } from '../../domain/services/taskGroupService';
 import type { Task } from '../../domain/models/task';
 import type { DependencyEdge } from '../../domain/models/dependency';
 
@@ -51,24 +51,17 @@ describe('generateSampleData', () => {
     expect([...derivedStates.values()].some((state) => state.rollupStatus === 'blocked')).toBe(true);
   });
 
-  it('includes independent task groups that can exercise graph layer bands', () => {
+  it('includes multiple task groups that can exercise graph group switching', () => {
     const { tasks, edges } = generateSampleData();
     const fullTasks = tasks as Task[];
     const fullEdges = edges as DependencyEdge[];
 
-    const layout = layoutTaskGraph(fullTasks, fullEdges);
-    const independentLayerCount = layout.layerBands.filter(
-      (band) => !hasCrossLayerEdge(band.taskIds, fullEdges)
-    ).length;
+    const groups = buildTaskGroups(fullTasks, fullEdges);
+    const independentGroupCount = groups.filter((group) => group.kind === 'independent').length;
+    const interdependentGroupCount = groups.filter((group) => group.kind === 'interdependent').length;
 
-    expect(layout.layerBands.length).toBeGreaterThanOrEqual(5);
-    expect(independentLayerCount).toBeGreaterThanOrEqual(1);
+    expect(groups.length).toBeGreaterThanOrEqual(2);
+    expect(independentGroupCount).toBeGreaterThanOrEqual(1);
+    expect(interdependentGroupCount).toBeGreaterThanOrEqual(1);
   });
 });
-
-function hasCrossLayerEdge(taskIds: string[], edges: DependencyEdge[]) {
-  const taskIdSet = new Set(taskIds);
-  return edges.some(
-    (edge) => taskIdSet.has(edge.fromTaskId) !== taskIdSet.has(edge.toTaskId)
-  );
-}

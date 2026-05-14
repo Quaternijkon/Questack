@@ -115,6 +115,9 @@ export function generateSampleData(): SampleData {
     t('template-save', 'template', '项目另存为模板', { sortOrder: 1, priority: 'medium', estimateMinutes: 90 }),
     t('template-ai-draft', 'template', 'AI 拆解任务草稿入口', { sortOrder: 2, priority: 'high', estimateMinutes: 140 }),
     t('template-ai-review', 'template', 'AI 建议人工确认流程', { sortOrder: 3, priority: 'critical', estimateMinutes: 120 }),
+    t('open-lab', null, '08 Independent No-Dependency Lab', { sortOrder: 7, priority: 'low' }),
+    t('open-lab-capture', 'open-lab', 'Capture a free-form idea', { sortOrder: 0, priority: 'low', estimateMinutes: 10 }),
+    t('open-lab-review', 'open-lab', 'Review it without dependency pressure', { sortOrder: 1, priority: 'low', estimateMinutes: 15 }),
   ];
 
   const edges: DependencyEdge[] = [

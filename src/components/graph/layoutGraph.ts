@@ -20,6 +20,8 @@ export interface GraphLayerBand {
 
 export interface LayoutTaskGraphOptions {
   manualPositions?: Record<string, { x: number; y: number }>;
+  groupId?: string;
+  groupLabel?: string;
 }
 
 export interface LayoutTaskGraphResult {
@@ -29,11 +31,9 @@ export interface LayoutTaskGraphResult {
 
 const NODE_WIDTH = 220;
 const NODE_HEIGHT = 88;
-const COLUMN_GAP = 300;
+const COLUMN_GAP = 270;
 const DEPTH_GAP = 132;
-const COLLISION_GAP = 96;
 const LAYER_PADDING = 72;
-const LAYER_GAP = 160;
 
 export function layoutTaskGraph(
   tasks: Task[],
@@ -44,64 +44,58 @@ export function layoutTaskGraph(
     .filter((task) => task.archivedAt == null)
     .sort(compareTasks);
   const taskById = new Map(activeTasks.map((task) => [task.id, task]));
-  const childrenByParent = buildChildrenByParent(activeTasks);
   const depths = computeDepths(activeTasks, taskById);
   const topoRanks = computeTopologicalRanks(activeTasks, edges);
-  const layers = buildRootLayers(activeTasks, childrenByParent);
 
   const positions = new Map<string, GraphNodePosition>();
   const layerBands: GraphLayerBand[] = [];
-  let nextLayerY = 0;
+  const buckets = new Map<string, Task[]>();
 
-  for (const layer of layers) {
-    const layerTasks = layer.taskIds
-      .map((id) => taskById.get(id))
-      .filter((task): task is Task => task != null)
-      .sort((a, b) => {
-        const depthDelta = (depths.get(a.id) ?? 0) - (depths.get(b.id) ?? 0);
-        if (depthDelta !== 0) return depthDelta;
-        const rankDelta = (topoRanks.get(a.id) ?? 0) - (topoRanks.get(b.id) ?? 0);
-        if (rankDelta !== 0) return rankDelta;
-        return compareTasks(a, b);
-      });
+  for (const task of activeTasks) {
+    const depth = depths.get(task.id) ?? 0;
+    const rank = topoRanks.get(task.id) ?? 0;
+    const bucketKey = `${depth}:${rank}`;
+    const bucket = buckets.get(bucketKey) ?? [];
+    bucket.push(task);
+    buckets.set(bucketKey, bucket);
+  }
 
-    const collisionCounts = new Map<string, number>();
-    const autoPositions = new Map<string, { x: number; y: number }>();
+  let rankStride = 1;
+  const collisionIndexByTask = new Map<string, number>();
+  for (const bucket of buckets.values()) {
+    bucket.sort(compareTasks);
+    rankStride = Math.max(rankStride, bucket.length);
+    bucket.forEach((task, index) => collisionIndexByTask.set(task.id, index));
+  }
 
-    for (const task of layerTasks) {
-      const depth = depths.get(task.id) ?? 0;
-      const rank = topoRanks.get(task.id) ?? 0;
-      const collisionKey = `${depth}:${rank}`;
-      const collisionIndex = collisionCounts.get(collisionKey) ?? 0;
-      collisionCounts.set(collisionKey, collisionIndex + 1);
+  for (const task of activeTasks) {
+    const manualPosition = options.manualPositions?.[task.id];
+    const depth = depths.get(task.id) ?? 0;
+    const rank = topoRanks.get(task.id) ?? 0;
+    const collisionIndex = collisionIndexByTask.get(task.id) ?? 0;
+    const autoPosition = {
+      x: LAYER_PADDING + (rank * rankStride + collisionIndex) * COLUMN_GAP,
+      y: LAYER_PADDING + depth * DEPTH_GAP,
+    };
 
-      autoPositions.set(task.id, {
-        x: LAYER_PADDING + rank * COLUMN_GAP,
-        y: nextLayerY + LAYER_PADDING + depth * DEPTH_GAP + collisionIndex * COLLISION_GAP,
-      });
-    }
+    positions.set(task.id, manualPosition
+      ? { ...manualPosition, source: 'manual' }
+      : { ...autoPosition, source: 'auto' });
+  }
 
-    for (const task of layerTasks) {
-      const manualPosition = options.manualPositions?.[task.id];
-      const autoPosition = autoPositions.get(task.id)!;
-      positions.set(task.id, manualPosition
-        ? { ...manualPosition, source: 'manual' }
-        : { ...autoPosition, source: 'auto' });
-    }
-
-    const bounds = getLayerBounds(layer.taskIds, positions);
+  if (activeTasks.length > 0) {
+    const taskIds = activeTasks.map((task) => task.id);
+    const bounds = getLayerBounds(taskIds, positions);
     layerBands.push({
-      id: `layer:${layer.rootTaskId}`,
-      rootTaskId: layer.rootTaskId,
-      label: layer.label,
-      taskIds: layer.taskIds,
+      id: options.groupId ?? 'task-group',
+      rootTaskId: options.groupId ?? 'task-group',
+      label: options.groupLabel ?? 'Task group',
+      taskIds,
       x: bounds.x - LAYER_PADDING,
       y: bounds.y - LAYER_PADDING,
       width: bounds.width + LAYER_PADDING * 2,
       height: bounds.height + LAYER_PADDING * 2,
     });
-
-    nextLayerY = bounds.y + bounds.height + LAYER_PADDING + LAYER_GAP;
   }
 
   return { positions, layerBands };
@@ -120,50 +114,6 @@ export function layoutGraph(
       { x: position.x, y: position.y },
     ])
   );
-}
-
-function buildChildrenByParent(tasks: Task[]): Map<string, Task[]> {
-  const childrenByParent = new Map<string, Task[]>();
-  for (const task of tasks) {
-    const parentKey = task.parentId ?? '__root__';
-    const children = childrenByParent.get(parentKey) ?? [];
-    children.push(task);
-    childrenByParent.set(parentKey, children);
-  }
-
-  for (const children of childrenByParent.values()) {
-    children.sort(compareTasks);
-  }
-
-  return childrenByParent;
-}
-
-function buildRootLayers(
-  tasks: Task[],
-  childrenByParent: Map<string, Task[]>
-): Array<{ rootTaskId: string; label: string; taskIds: string[] }> {
-  const taskById = new Map(tasks.map((task) => [task.id, task]));
-  const rootTasks = tasks
-    .filter((task) => task.parentId == null || !taskById.has(task.parentId))
-    .sort(compareTasks);
-
-  return rootTasks.map((root) => ({
-    rootTaskId: root.id,
-    label: root.title || '（未命名任务团）',
-    taskIds: collectSubtreeIds(root.id, childrenByParent),
-  }));
-}
-
-function collectSubtreeIds(
-  rootTaskId: string,
-  childrenByParent: Map<string, Task[]>
-): string[] {
-  const result = [rootTaskId];
-  const children = childrenByParent.get(rootTaskId) ?? [];
-  for (const child of children) {
-    result.push(...collectSubtreeIds(child.id, childrenByParent));
-  }
-  return result;
 }
 
 function computeDepths(tasks: Task[], taskById: Map<string, Task>): Map<string, number> {

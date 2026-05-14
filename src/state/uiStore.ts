@@ -16,7 +16,7 @@ export interface UIStoreState {
   inspectorTab: InspectorTab;
   sidebarCollapsed: boolean;
   expandedTaskIds: Set<string>;
-  graphFilter: 'all' | 'ready' | 'blocked' | 'done' | 'in_progress';
+  graphFilter: 'all' | 'ready' | 'blocked' | 'done' | 'in_progress' | 'todo' | 'canceled';
   showGraphFilter: boolean;
   selectedProjectId: string | null;
   graphLayoutMode: GraphLayoutMode;

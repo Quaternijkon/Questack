@@ -1749,6 +1749,262 @@ select:focus {
   box-shadow: var(--elevation-2) !important;
 }
 
+.graph-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.graph-canvas-shell {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.graph-command-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--glass-surface);
+  backdrop-filter: blur(22px) saturate(1.2);
+  z-index: 3;
+}
+
+.graph-command-row,
+.graph-command-actions,
+.graph-group-heading,
+.graph-status-strip,
+.graph-task-group-strip {
+  display: flex;
+  align-items: center;
+}
+
+.graph-command-row {
+  gap: 14px;
+}
+
+.graph-group-heading {
+  gap: 10px;
+  min-width: 260px;
+}
+
+.graph-group-title {
+  font: 800 15px/20px var(--font-sans);
+  color: var(--md-on-surface);
+  letter-spacing: 0;
+}
+
+.graph-group-meta {
+  margin-top: 1px;
+  font: 600 12px/16px var(--font-sans);
+  color: var(--md-on-surface-variant);
+}
+
+.graph-command-actions {
+  margin-left: auto;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.graph-task-group-strip,
+.graph-status-strip {
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.task-group-tab,
+.status-filter-chip,
+.node-action-btn {
+  border: 1px solid var(--panel-border);
+  background: var(--md-surface-container);
+  color: var(--md-on-surface);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.task-group-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 168px;
+  max-width: 260px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: var(--elevation-1);
+}
+
+.task-group-tab:hover,
+.status-filter-chip:hover,
+.node-action-btn:hover {
+  border-color: rgba(66,133,244,0.38);
+  background: var(--md-surface-container-high);
+}
+
+.task-group-tab.selected {
+  border-color: rgba(66,133,244,0.48);
+  background: rgba(66,133,244,0.12);
+  color: var(--google-blue);
+}
+
+.task-group-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-group-kind,
+.task-group-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  font: 800 10px/14px var(--font-sans);
+}
+
+.task-group-kind {
+  padding: 1px 6px;
+  color: var(--md-on-surface-variant);
+  background: rgba(95,99,104,0.1);
+}
+
+.task-group-kind.interdependent {
+  color: var(--google-blue);
+  background: rgba(66,133,244,0.12);
+}
+
+.task-group-index {
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  color: var(--md-on-primary);
+  background: var(--md-primary);
+}
+
+.status-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font: 700 12px/16px var(--font-sans);
+  white-space: nowrap;
+}
+
+.status-filter-chip strong {
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 11px;
+  background: rgba(95,99,104,0.1);
+}
+
+.status-filter-chip.selected {
+  border-color: transparent;
+  color: var(--md-on-primary);
+  background: var(--md-primary);
+}
+
+.status-filter-chip.selected strong {
+  color: var(--md-primary);
+  background: var(--md-on-primary);
+}
+
+.graph-mode-chip {
+  gap: 6px;
+}
+
+.task-node {
+  width: 220px;
+  min-height: 98px;
+  padding: 12px 14px 10px;
+}
+
+.task-node.status-in_progress {
+  border-color: rgba(66,133,244,0.5);
+}
+
+.task-node.status-todo {
+  border-color: rgba(251,188,4,0.42);
+}
+
+.task-node .node-header {
+  min-width: 0;
+}
+
+.task-node .node-body {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  min-height: 22px;
+}
+
+.task-node .node-estimate,
+.task-node .node-layout-source,
+.task-node .node-blocker-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(95,99,104,0.08);
+}
+
+.task-node .node-blocker-count {
+  color: var(--google-red);
+  background: rgba(234,67,53,0.12);
+}
+
+.node-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.node-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border-radius: 7px;
+  padding: 0;
+}
+
+.task-node.status-done .node-action-btn,
+.task-node.status-canceled .node-action-btn {
+  opacity: 0.9;
+}
+
+.react-flow__edge.dependency-edge .react-flow__edge-path {
+  stroke-width: 3;
+}
+
+.react-flow__edge.decomposition-edge .react-flow__edge-path {
+  stroke-dasharray: 6 7;
+  stroke-width: 1.8;
+}
+
+.react-flow__edge-text {
+  fill: var(--md-on-surface-variant);
+  font: 800 10px var(--font-sans);
+}
+
+.react-flow__edge.blocking-edge .react-flow__edge-text {
+  fill: var(--google-red);
+}
+
 .toast {
   border-radius: 8px;
 }

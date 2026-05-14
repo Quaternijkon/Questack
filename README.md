@@ -1,48 +1,79 @@
 # Questack
 
-A local-first DAG task roadmap web application. Break complex goals into task trees with dependency graphs, and let the system tell you exactly what to work on next.
+Current version: `0.4.0`
+
+Questack is a local-first DAG task roadmap web application. It helps users break complex goals into task structures, connect tasks with prerequisite dependencies, and see what is ready, blocked, active, or complete.
+
+## Product Model
+
+Questack intentionally keeps two relationships separate:
+
+- **Task decomposition**: parent and child tasks describe how a goal is broken down.
+- **Task dependency**: directed edges describe "A must finish before B can start".
+
+The graph workspace currently shows one task group per view. A task group is a connected set of tasks formed by decomposition links and dependency links. Interdependent groups contain explicit dependency edges; independent groups do not.
 
 ## Features
 
-- **Infinite Task Tree**: Organize goals into hierarchical task trees with unlimited nesting
-- **DAG Dependency Graph**: Express "A must complete before B" relationships with full cycle detection
-- **Ready Queue**: System auto-computes which leaf tasks are unblocked and ready to execute
-- **Roadmap View**: Topological sort generates execution order; blocked tasks show exact reasons
-- **Graph Visualization**: React Flow canvas with dagre auto-layout, drag-to-connect edges
-- **Material Design 3**: Dark theme with M3 color tokens, elevation, typography, and motion
-- **Offline-First**: All data persisted in IndexedDB (via Dexie); works entirely offline
-- **Import/Export**: Full JSON export/import with validation (cycle detection, cross-project checks)
-- **Keyboard Shortcuts**: Ctrl+1-4 for views, Ctrl+N for new task, Ctrl+E for export
+- **Task Tree**: Organize goals into hierarchical task trees with unlimited nesting.
+- **Task Group Graph**: Show one independent or interdependent task group per graph view.
+- **Strict Graph Layout**: Top-to-bottom means task decomposition depth; left-to-right means dependency order.
+- **Status-Rich Nodes**: Show todo, ready, blocked, in progress, done, and canceled states directly on task nodes.
+- **DAG Dependency Graph**: Express prerequisite relationships with cycle detection.
+- **Ready Queue**: Auto-compute leaf tasks that are unblocked and ready to execute.
+- **Roadmap View**: Use topological order to show execution sequence and blocked reasons.
+- **Local-First Persistence**: Store all project data in IndexedDB through Dexie.
+- **Import/Export**: Export and validate Questack JSON project data.
+- **Theme Support**: Light and dark UI with Google-inspired status colors and app-level theme toggle.
+- **Sample Project**: Built-in feature-tour sample data for onboarding and QA.
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+|-------|------------|
 | Framework | React 19 + TypeScript + Vite |
 | State | Zustand |
-| Graph Viz | React Flow (@xyflow/react) + dagre auto-layout |
+| Graph UI | React Flow `@xyflow/react` |
 | Persistence | IndexedDB via Dexie |
-| Testing | Vitest (38 unit tests) |
-| Deployment | GitHub Pages (automatic via Actions) |
+| Icons | lucide-react |
+| Validation | Zod |
+| Testing | Vitest + React Testing Library + fake-indexeddb |
+| Deployment | GitHub Pages via GitHub Actions |
 
 ## Architecture
 
-```
+```text
 src/
-  domain/         Pure business logic (models, services, algorithms)
-  repositories/   Data persistence abstraction (IndexedDB via Dexie)
+  domain/         Pure business logic: models, services, graph algorithms
+  repositories/   IndexedDB persistence adapters
   state/          Zustand stores connecting repositories to UI
-  components/     React UI components (tree, graph, queue, inspector)
-  tests/          Unit tests for core algorithms
+  components/     React UI components for tree, graph, queue, inspector, layout
+  tests/          Unit and component tests
+docs/
+  superpowers/
+    plans/        Agent-readable implementation plans
 ```
 
 ## Getting Started
 
 ```bash
 npm install
-npm run dev      # Start dev server
-npm run build    # Production build
-npm test         # Run 38 unit tests
+npm run dev
+npm run lint
+npm test
+npm run build
+```
+
+Local dev URL when using the default project base:
+
+```text
+http://127.0.0.1:5173/Questack/
+```
+
+For CI parity, use npm 10 clean install before release verification:
+
+```bash
+npx -p npm@10 npm ci
 ```
 
 ## Keyboard Shortcuts
@@ -58,6 +89,55 @@ npm test         # Run 38 unit tests
 | `Ctrl+I` | Toggle Inspector |
 | `Delete` | Delete selected task |
 
-## Project Status
+## Agent Plans
 
-MVP complete. All core features implemented per the [engineering plan](./dag-task-roadmap-webapp-plan.md).
+Agent-readable plans live in `docs/superpowers/plans/`.
+
+Current next-stage plan:
+
+- [`2026-05-15-task-map-dependency-ux.md`](./docs/superpowers/plans/2026-05-15-task-map-dependency-ux.md): v0.5.0 plan for task-map decomposition visuals, task-tree expand reliability, and smoother dependency editing.
+
+## Version History
+
+### 0.4.0 - Planning Baseline For Task Map And Dependency UX
+
+- Added the agent-readable v0.5.0 implementation plan for task-map decomposition visuals and dependency editing UX.
+- Established README as the durable version history and release log.
+- Documented the current task group graph model and CI verification commands.
+
+### 0.3.0 - Task Group Graph Workspace
+
+- Added task group detection for independent and interdependent task groups.
+- Changed graph view to show one task group per view.
+- Enforced top-to-bottom decomposition and left-to-right dependency order.
+- Added graph status filters, task group switching, and node quick status actions.
+
+### 0.2.1 - Sample Loading Fix
+
+- Fixed project loading from IndexedDB when `archivedAt` is missing.
+- Added tests for loading the feature-tour sample from the empty start screen.
+
+### 0.2.0 - Feature Tour Sample Data
+
+- Added a built-in Questack feature-tour sample project.
+- Covered statuses, priorities, estimates, deep decomposition, ready tasks, blocked reasons, and independent task groups.
+
+### 0.1.0 - Local-First MVP
+
+- Implemented the local-first DAG task roadmap MVP.
+- Added task tree, graph view, ready queue, roadmap, inspector, IndexedDB persistence, import/export, and core tests.
+
+## Maintenance Rules
+
+- Every shipped behavior change must update `README.md` Version History.
+- Every release must keep `package.json` and `package-lock.json` versions in sync.
+- For deployment-bound changes, run:
+
+```bash
+npx -p npm@10 npm ci
+npm run lint
+npm test
+npm run build
+```
+
+- Push to `main` triggers GitHub Pages deployment through GitHub Actions.

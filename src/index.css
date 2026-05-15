@@ -1901,6 +1901,47 @@ select:focus {
   scrollbar-width: thin;
 }
 
+.graph-relationship-key {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.relationship-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--md-surface-container);
+  font: 800 11px/14px var(--font-sans);
+  color: var(--md-on-surface-variant);
+  white-space: nowrap;
+}
+
+.relationship-key-item span {
+  width: 24px;
+  height: 0;
+  border-top: 2px solid var(--md-outline);
+}
+
+.relationship-key-item.decomposition span {
+  border-top-style: dashed;
+  border-color: var(--google-green);
+}
+
+.relationship-key-item.dependency span {
+  border-color: var(--google-blue);
+}
+
+.relationship-key-item.blocking span {
+  border-color: var(--google-red);
+}
+
 .task-group-tab,
 .status-filter-chip,
 .node-action-btn {
@@ -2120,13 +2161,23 @@ select:focus {
 }
 
 .react-flow__edge.decomposition-edge .react-flow__edge-path {
-  stroke-dasharray: 6 7;
-  stroke-width: 1.8;
+  stroke: var(--google-green);
+  stroke-dasharray: 6 8;
+  stroke-width: 1.6;
+  opacity: 0.5;
 }
 
 .react-flow__edge-text {
   fill: var(--md-on-surface-variant);
   font: 800 10px var(--font-sans);
+}
+
+.react-flow__edge.dependency-edge .react-flow__edge-text {
+  fill: var(--google-blue);
+}
+
+.react-flow__edge.decomposition-edge .react-flow__edge-text {
+  fill: var(--google-green);
 }
 
 .react-flow__edge.blocking-edge .react-flow__edge-text {

@@ -483,6 +483,12 @@ function GraphCommandBar({
           </button>
         ))}
       </div>
+
+      <div className="graph-relationship-key" aria-label="图关系类型">
+        <span className="relationship-key-item decomposition"><span />拆解</span>
+        <span className="relationship-key-item dependency"><span />依赖</span>
+        <span className="relationship-key-item blocking"><span />阻塞</span>
+      </div>
     </div>
   );
 }
@@ -535,7 +541,7 @@ function toReactFlowEdges(
       target: edge.toTaskId,
       type: 'smoothstep',
       animated: isBlocking,
-      label: isBlocking ? '阻塞' : undefined,
+      label: isBlocking ? '阻塞' : '依赖',
       className: isBlocking
         ? 'dependency-edge blocking-edge'
         : 'dependency-edge',
@@ -557,7 +563,7 @@ function toDecompositionEdges(tasks: Task[], visibleTaskIds: Set<string>): Edge[
       selectable: false,
       focusable: false,
       deletable: false,
-      label: undefined,
+      label: '拆解',
       className: 'decomposition-edge',
       data: { kind: 'decomposition' },
     }));

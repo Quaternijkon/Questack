@@ -2072,6 +2072,31 @@ select:focus {
   background: rgba(66,133,244,0.14);
 }
 
+.dependency-port {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--md-surface-container);
+  background: var(--google-blue);
+  box-shadow: 0 0 0 3px rgba(66,133,244,0.14);
+}
+
+.dependency-port.in {
+  background: var(--google-red);
+  box-shadow: 0 0 0 3px rgba(234,67,53,0.14);
+}
+
+.dependency-port.out {
+  background: var(--google-blue);
+}
+
+.task-node:hover .dependency-port {
+  box-shadow: 0 0 0 5px rgba(66,133,244,0.2);
+}
+
+.task-node:hover .dependency-port.in {
+  box-shadow: 0 0 0 5px rgba(234,67,53,0.2);
+}
+
 .task-node.dependency-source {
   outline: 2px solid rgba(66,133,244,0.58);
   outline-offset: 4px;

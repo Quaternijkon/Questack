@@ -33,6 +33,10 @@ import TaskGraphNode from './GraphNode';
 import { layoutTaskGraph, type GraphLayerBand } from './layoutGraph';
 import { buildTaskGroups, type TaskGroup } from '../../domain/services/taskGroupService';
 import { buildTaskMapRegions, type TaskMapRegion } from '../../domain/services/taskMapService';
+import {
+  createChildTaskDraft,
+  createSuccessorTaskDraft,
+} from '../../domain/services/nodeQuickActionService';
 import type { Task, DerivedTaskState, ManualTaskStatus, RollupStatus } from '../../domain/models/task';
 import type { DependencyEdge } from '../../domain/models/dependency';
 
@@ -65,6 +69,7 @@ export default function GraphView() {
   const currentProjectId = useProjectStore((s) => s.currentProjectId);
   const tasks = useTaskStore((s) => s.tasks);
   const derivedStates = useTaskStore((s) => s.derivedStates);
+  const createTask = useTaskStore((s) => s.createTask);
   const updateTaskManualStatus = useTaskStore((s) => s.updateTaskManualStatus);
   const edges = useGraphStore((s) => s.edges);
   const addDependency = useGraphStore((s) => s.addDependency);
@@ -154,6 +159,38 @@ export default function GraphView() {
     [clearDependencyDraft, dependencyDraft.sourceTaskId, startDependencyDraft]
   );
 
+  const handleCreateChildTask = useCallback(
+    async (taskId: string) => {
+      if (!currentProjectId) return;
+      const sourceTask = tasks.find((task) => task.id === taskId);
+      if (!sourceTask) return;
+
+      const draft = createChildTaskDraft(sourceTask, tasks);
+      const child = await createTask(currentProjectId, draft.parentId, draft.title, draft.sortOrder);
+      selectTask(child.id);
+      openInspector('details');
+    },
+    [createTask, currentProjectId, openInspector, selectTask, tasks]
+  );
+
+  const handleCreateSuccessorTask = useCallback(
+    async (taskId: string) => {
+      if (!currentProjectId) return;
+      const sourceTask = tasks.find((task) => task.id === taskId);
+      if (!sourceTask) return;
+
+      const draft = createSuccessorTaskDraft(sourceTask, tasks);
+      const successor = await createTask(currentProjectId, draft.parentId, draft.title, draft.sortOrder);
+      const result = await addDependency(sourceTask.id, successor.id, currentProjectId);
+      if (!result.success) {
+        alert(result.message);
+      }
+      selectTask(successor.id);
+      openInspector('details');
+    },
+    [addDependency, createTask, currentProjectId, openInspector, selectTask, tasks]
+  );
+
   const graphLayout = useMemo(() => {
     const manualPositions = currentProjectId && graphLayoutMode === 'edit'
       ? graphManualPositions[currentProjectId] ?? {}
@@ -172,6 +209,8 @@ export default function GraphView() {
       graphLayout.positions,
       handleNodeStatusChange,
       handleStartDependencyDraft,
+      handleCreateChildTask,
+      handleCreateSuccessorTask,
       dependencyDraft.sourceTaskId,
       dependencyDraft.targetTaskId
     );
@@ -181,6 +220,8 @@ export default function GraphView() {
     graphLayout.positions,
     handleNodeStatusChange,
     handleStartDependencyDraft,
+    handleCreateChildTask,
+    handleCreateSuccessorTask,
     dependencyDraft.sourceTaskId,
     dependencyDraft.targetTaskId,
   ]);
@@ -452,6 +493,8 @@ function toReactFlowNodes(
   positions: Map<string, { x: number; y: number; source: 'auto' | 'manual' }>,
   onSetStatus: (taskId: string, status: ManualTaskStatus) => void,
   onStartDependency: (taskId: string) => void,
+  onCreateChild: (taskId: string) => void,
+  onCreateSuccessor: (taskId: string) => void,
   dependencySourceTaskId: string | null,
   dependencyTargetTaskId: string | null
 ): Node[] {
@@ -468,6 +511,8 @@ function toReactFlowNodes(
         layoutSource: positions.get(task.id)?.source ?? 'auto',
         onSetStatus,
         onStartDependency,
+        onCreateChild,
+        onCreateSuccessor,
         isDependencySource: dependencySourceTaskId === task.id,
         isDependencyTargetPreview:
           dependencySourceTaskId != null &&

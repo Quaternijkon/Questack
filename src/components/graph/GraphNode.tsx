@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Check, GitBranch, Play, RotateCcw } from 'lucide-react';
+import { Check, GitBranch, ListTree, Play, RotateCcw, StepForward } from 'lucide-react';
 import type { Task, DerivedTaskState, ManualTaskStatus } from '../../domain/models/task';
 
 type DisplayStatus = 'todo' | 'ready' | 'blocked' | 'in_progress' | 'done' | 'canceled';
@@ -12,6 +12,8 @@ interface TaskNodeData {
   layoutSource?: 'auto' | 'manual';
   onSetStatus?: (taskId: string, status: ManualTaskStatus) => void;
   onStartDependency?: (taskId: string) => void;
+  onCreateChild?: (taskId: string) => void;
+  onCreateSuccessor?: (taskId: string) => void;
   isDependencySource?: boolean;
   isDependencyTargetPreview?: boolean;
 }
@@ -33,6 +35,8 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
     layoutSource,
     onSetStatus,
     onStartDependency,
+    onCreateChild,
+    onCreateSuccessor,
     isDependencySource,
     isDependencyTargetPreview,
   } = data as unknown as TaskNodeData;
@@ -56,7 +60,7 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
 
   return (
     <div className={nodeClassName}>
-      <Handle type="target" position={Position.Left} />
+      <Handle className="dependency-port in" type="target" position={Position.Left} />
       <div className="node-header">
         <span className={`priority-indicator priority-${task.priority}`} />
         <span className="node-title">{task.title || '(Untitled)'}</span>
@@ -79,6 +83,32 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
         )}
       </div>
       <div className="node-actions nodrag nopan">
+        <button
+          aria-label="添加子任务"
+          className="node-action-btn"
+          onClick={(event) => {
+            event.stopPropagation();
+            onCreateChild?.(task.id);
+          }}
+          onPointerDown={stopActionPointer}
+          type="button"
+          title="添加子任务"
+        >
+          <ListTree size={12} />
+        </button>
+        <button
+          aria-label="添加后续任务"
+          className="node-action-btn"
+          onClick={(event) => {
+            event.stopPropagation();
+            onCreateSuccessor?.(task.id);
+          }}
+          onPointerDown={stopActionPointer}
+          type="button"
+          title="添加后续任务"
+        >
+          <StepForward size={12} />
+        </button>
         {task.manualStatus !== 'in_progress' && task.manualStatus !== 'done' && (
           <button
             className="node-action-btn"
@@ -127,7 +157,7 @@ export default memo(function TaskGraphNode({ data }: NodeProps) {
           <GitBranch size={12} />
         </button>
       </div>
-      <Handle type="source" position={Position.Right} />
+      <Handle className="dependency-port out" type="source" position={Position.Right} />
     </div>
   );
 });

@@ -1,6 +1,6 @@
 # Questack
 
-Current version: `0.6.0`
+Current version: `0.6.1`
 
 Questack is a local-first DAG task roadmap web application. It helps users break complex goals into task structures, connect tasks with prerequisite dependencies, and see what is ready, blocked, active, or complete.
 
@@ -99,6 +99,13 @@ Most recent implementation plan:
 - [`2026-05-15-task-map-dependency-ux.md`](./docs/superpowers/plans/2026-05-15-task-map-dependency-ux.md): v0.5.0 plan for task-map decomposition visuals, task-tree expand reliability, and smoother dependency editing.
 
 ## Version History
+
+### 0.6.1 - Free Graph Node Dragging
+
+- Made graph nodes draggable by default, without requiring users to switch into edit mode first.
+- Persisted the first drag from automatic layout as a free-layout position.
+- Updated graph layout mode copy from edit positioning to free dragging.
+- Added grab/grabbing cursor feedback for graph nodes.
 
 ### 0.6.0 - Comfy Node Workbench
 

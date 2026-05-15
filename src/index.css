@@ -2054,6 +2054,11 @@ select:focus {
   width: 220px;
   min-height: 98px;
   padding: 12px 14px 10px;
+  cursor: grab;
+}
+
+.react-flow__node.dragging .task-node {
+  cursor: grabbing;
 }
 
 .task-node.status-in_progress {

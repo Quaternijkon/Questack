@@ -312,12 +312,21 @@ export default function GraphView() {
     setGraphLayoutMode('auto');
   }, [clearGraphManualPositions, currentProjectId, setGraphLayoutMode]);
 
+  const handleNodeDragStart = useCallback(() => {
+    if (graphLayoutMode !== 'edit') {
+      setGraphLayoutMode('edit');
+    }
+  }, [graphLayoutMode, setGraphLayoutMode]);
+
   const handleNodeDragStop = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      if (!currentProjectId || graphLayoutMode !== 'edit') return;
+      if (!currentProjectId) return;
+      if (graphLayoutMode !== 'edit') {
+        setGraphLayoutMode('edit');
+      }
       saveGraphNodePosition(currentProjectId, node.id, node.position);
     },
-    [currentProjectId, graphLayoutMode, saveGraphNodePosition]
+    [currentProjectId, graphLayoutMode, saveGraphNodePosition, setGraphLayoutMode]
   );
 
   if (!currentProjectId) {
@@ -363,6 +372,7 @@ export default function GraphView() {
           onNodeClick={onNodeClick}
           onNodeMouseEnter={onNodeMouseEnter}
           onNodeMouseLeave={onNodeMouseLeave}
+          onNodeDragStart={handleNodeDragStart}
           onNodeDragStop={handleNodeDragStop}
           onEdgesDelete={(deletedEdges) => {
             for (const edge of deletedEdges) {
@@ -370,7 +380,7 @@ export default function GraphView() {
             }
           }}
           nodeTypes={nodeTypes}
-          nodesDraggable={graphLayoutMode === 'edit'}
+          nodesDraggable
           fitView
           fitViewOptions={{ padding: 0.22 }}
           deleteKeyCode={['Backspace', 'Delete']}
@@ -444,7 +454,7 @@ function GraphCommandBar({
             type="button"
           >
             <Move size={14} />
-            {graphLayoutMode === 'edit' ? '编辑位置' : '自动布局'}
+            {graphLayoutMode === 'edit' ? '自由拖拽' : '自动排列'}
           </button>
           <button className="m3-btn m3-btn-filled-tonal m3-btn-sm" onClick={onRestoreAutoLayout} type="button">
             <RotateCcw size={14} />

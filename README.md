@@ -1,6 +1,6 @@
 # Questack
 
-Current version: `0.5.0`
+Current version: `0.6.0`
 
 Questack is a local-first DAG task roadmap web application. It helps users break complex goals into task structures, connect tasks with prerequisite dependencies, and see what is ready, blocked, active, or complete.
 
@@ -16,10 +16,10 @@ The graph workspace shows one task group per view. A task group is a connected s
 ## Features
 
 - **Task Tree**: Organize goals into hierarchical task trees with unlimited nesting.
-- **Task Map Graph**: Show one independent or interdependent task group per graph view with set-style containment regions.
+- **Task Map Graph**: Show one independent or interdependent task group per graph view with set-style containment regions, visible dependency ports, and quick node creation controls.
 - **Strict Graph Layout**: Top-to-bottom means task decomposition depth; left-to-right means dependency order.
 - **Status-Rich Nodes**: Show todo, ready, blocked, in progress, done, and canceled states directly on task nodes.
-- **DAG Dependency Graph**: Express prerequisite relationships with cycle detection, ranked candidates, inspector editing, and direct graph-node creation.
+- **DAG Dependency Graph**: Express prerequisite relationships with cycle detection, ranked candidates, inspector editing, explicit edge labels, and direct graph-node creation.
 - **Ready Queue**: Auto-compute leaf tasks that are unblocked and ready to execute.
 - **Roadmap View**: Use topological order to show execution sequence and blocked reasons.
 - **Local-First Persistence**: Store all project data in IndexedDB through Dexie.
@@ -95,9 +95,18 @@ Agent-readable plans live in `docs/superpowers/plans/`.
 
 Most recent implementation plan:
 
+- [`2026-05-15-comfy-node-workbench.md`](./docs/superpowers/plans/2026-05-15-comfy-node-workbench.md): v0.6.0 plan for clearer relationship language and ComfyUI-inspired node workbench controls.
 - [`2026-05-15-task-map-dependency-ux.md`](./docs/superpowers/plans/2026-05-15-task-map-dependency-ux.md): v0.5.0 plan for task-map decomposition visuals, task-tree expand reliability, and smoother dependency editing.
 
 ## Version History
+
+### 0.6.0 - Comfy Node Workbench
+
+- Clarified graph relationship language for task decomposition, dependencies, and blocking edges.
+- Added visible dependency input/output ports on graph nodes.
+- Added graph-node quick actions for creating child tasks and dependency-linked successor tasks.
+- Improved task-map containment and dependency edge styling for faster visual scanning.
+- Preserved one task group per graph view and the top-to-bottom decomposition / left-to-right dependency model.
 
 ### 0.5.0 - Task Map And Dependency Editing UX
 
